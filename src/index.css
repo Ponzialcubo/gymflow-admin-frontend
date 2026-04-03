@@ -1,0 +1,26 @@
+/* src/index.css */
+@import "tailwindcss";
+
+@theme {
+  /* Al poner --color- lo convertimos automáticamente en clases de Tailwind
+     como bg-primary o text-primary */
+  --color-primary: #2563eb;       
+  --color-primary-dark: #1d4ed8;
+  --color-main: #f8fafc;       
+  --color-border: #e2e8f0;
+}
+
+@layer base {
+  body {
+    background-color: var(--color-main);
+    color: #0f172a; /* slate-900 */
+    font-family: 'Inter', system-ui, sans-serif;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  *, *::before, *::after {
+    box-sizing: inherit;
+  }
+}
