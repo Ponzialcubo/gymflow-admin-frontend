@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import axios from 'axios';
+import { supabase } from '../config/supabase'; // Conectamos nuestro motor
 
 // Recibimos 'onLogin' que viene desde App.jsx
 export default function LoginPage({ onLogin }) {
@@ -14,18 +14,25 @@ export default function LoginPage({ onLogin }) {
     setLoading(true);
 
     try {
-      const res = await axios.post('http://localhost:3000/api/login', {
-        email,
-        password
-      });
+      // Petición directa a Supabase buscando coincidencia exacta
+      const { data, error: supabaseError } = await supabase
+        .from('usuarios')
+        .select('id, nombre, email, rol, activo')
+        .eq('email', email)
+        .eq('password', password) // Aviso de tutor: Para el TFG final usaremos Supabase Auth para encriptar esto ;)
+        .eq('activo', true)
+        .single(); // Exigimos que nos devuelva un único usuario
 
-      // Si el login es correcto, enviamos los datos a App.jsx
-      // Según tu backend, la respuesta es res.data.usuario
-      if (res.data && res.data.usuario) {
-        onLogin(res.data.usuario); 
+      // Si hay un error (ej. no encuentra a nadie) o no hay datos, lanzamos el fallo
+      if (supabaseError || !data) {
+        throw new Error('Credenciales inválidas o usuario inactivo');
       }
+
+      // Si pasamos el filtro, el login es correcto y enviamos los datos a App.jsx
+      onLogin(data); 
+      
     } catch (err) {
-      setError(err.response?.data?.error || 'Error al conectar con el servidor');
+      setError(err.message || 'Error al conectar con el servidor');
     } finally {
       setLoading(false);
     }
@@ -75,7 +82,7 @@ export default function LoginPage({ onLogin }) {
 
               {error && (
                 <div className="bg-red-50 text-red-600 p-4 rounded-xl text-xs font-bold border border-red-100 animate-shake">
-                   ⚠️ {error}
+                    ⚠️ {error}
                 </div>
               )}
 

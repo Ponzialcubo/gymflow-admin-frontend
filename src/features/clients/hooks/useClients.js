@@ -1,7 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import axios from 'axios';
-
-const API_URL = 'http://localhost:3000/api';
+import { supabase } from '../../../config/supabase'; // Asegúrate de que los '../' sean correctos según tu carpeta
 
 export const useClients = () => {
   const [socios, setSocios] = useState([]);
@@ -9,6 +7,9 @@ export const useClients = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedSocioId, setSelectedSocioId] = useState(null);
   const [loading, setLoading] = useState(true);
+  
+  // Nota de tutor: En el futuro, la contraseña por defecto "123" la quitaremos 
+  // cuando integremos Supabase Auth de verdad, pero para salir del paso está bien.
   const [newSocio, setNewSocio] = useState({ nombre: '', email: '', password: '123' });
 
   useEffect(() => {
@@ -18,10 +19,17 @@ export const useClients = () => {
   const fetchSocios = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(`${API_URL}/usuarios`);
-      setSocios(res.data);
+      // Petición directa a Supabase (equivale a tu app.get de Node)
+      const { data, error } = await supabase
+        .from('usuarios')
+        .select('id, nombre, email, rol, fecha_registro, activo')
+        .eq('rol', 'socio')
+        .eq('activo', true);
+
+      if (error) throw error;
+      setSocios(data || []);
     } catch (err) {
-      console.error("Error al cargar socios:", err);
+      console.error("Error al cargar socios:", err.message);
     } finally {
       setLoading(false);
     }
@@ -30,12 +38,25 @@ export const useClients = () => {
   const handleAddSocio = async (e) => {
     e.preventDefault();
     try {
-      await axios.post(`${API_URL}/usuarios`, newSocio);
+      // Inserción directa en Supabase (equivale a tu app.post de Node)
+      const { error } = await supabase
+        .from('usuarios')
+        .insert([{ 
+            nombre: newSocio.nombre, 
+            email: newSocio.email, 
+            password: newSocio.password, 
+            rol: 'socio', 
+            activo: true 
+        }]);
+
+      if (error) throw error;
+
       setIsModalOpen(false);
       setNewSocio({ nombre: '', email: '', password: '123' });
-      fetchSocios();
+      fetchSocios(); // Recargamos la lista
     } catch (err) {
-      alert("Error: El email ya está registrado o el servidor no responde.");
+      console.error(err);
+      alert("Error: El email ya está registrado o hay un problema con la base de datos.");
     }
   };
 
