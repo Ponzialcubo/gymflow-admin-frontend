@@ -1,7 +1,5 @@
-import { useState, useEffect, useMemo } from 'react';
-import axios from 'axios';
-
-const API_URL = 'http://localhost:3000/api';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import { supabase } from '../../../config/supabase'; // Ajusta la ruta a tu config
 
 export const useNutrition = () => {
   const [socios, setSocios] = useState([]);
@@ -18,20 +16,33 @@ export const useNutrition = () => {
     grasas: 70 
   });
 
+  // Carga inicial de socios
   useEffect(() => {
     const fetchSocios = async () => {
       try {
-        const res = await axios.get(`${API_URL}/usuarios`);
-        setSocios(res.data);
-        if(res.data.length > 0) setForm(f => ({...f, id_usuario: res.data[0].id}));
+        const { data, error } = await supabase
+          .from('usuarios')
+          .select('id, nombre')
+          .eq('rol', 'socio')
+          .eq('activo', true)
+          .order('nombre');
+
+        if (error) throw error;
+
+        setSocios(data || []);
+        // Si hay socios, seleccionamos el primero por defecto en el select
+        if(data && data.length > 0) {
+          setForm(f => ({...f, id_usuario: data[0].id}));
+        }
       } catch (err) {
-        setMensaje({ texto: '❌ Error al conectar con el servidor', tipo: 'error' });
+        setMensaje({ texto: '❌ Error al conectar con Supabase', tipo: 'error' });
       }
     };
     fetchSocios();
   }, []);
 
-  // Lógica de Negocio: Cálculo de Coherencia
+  // --- Lógica de Negocio: Cálculo de Coherencia ---
+  // Las proteínas y HC tienen 4 kcal/g, las grasas 9 kcal/g.
   const kcalCalculadas = useMemo(() => {
     return (form.proteinas * 4) + (form.carbohidratos * 4) + (form.grasas * 9);
   }, [form.proteinas, form.carbohidratos, form.grasas]);
@@ -41,9 +52,24 @@ export const useNutrition = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setMensaje({ texto: '', tipo: '' });
+
     try {
-      await axios.post(`${API_URL}/dietas`, form);
+      // Inserción en la tabla 'dietas'
+      const { error } = await supabase
+        .from('dietas')
+        .insert([{
+          id_usuario: form.id_usuario,
+          nombre_dieta: form.nombre_dieta,
+          calorias_objetivo: parseInt(form.calorias_objetivo),
+          proteinas: parseInt(form.proteinas),
+          carbohidratos: parseInt(form.carbohidratos),
+          grasas: parseInt(form.grasas)
+        }]);
+
+      if (error) throw error;
       
+      // Actualizamos la lista local de "Recientes" para feedback visual
       const nombreSocio = socios.find(s => s.id == form.id_usuario)?.nombre;
       setRecientes(prev => [{
         id: Date.now(),
@@ -52,10 +78,14 @@ export const useNutrition = () => {
         kcal: form.calorias_objetivo
       }, ...prev].slice(0, 3));
 
-      setMensaje({ texto: '✅ Plan nutricional sincronizado', tipo: 'success' });
+      setMensaje({ texto: '✅ Plan nutricional sincronizado en la nube', tipo: 'success' });
+      
+      // Limpiamos el mensaje tras unos segundos
       setTimeout(() => setMensaje({ texto: '', tipo: '' }), 4000);
+
     } catch (err) {
-      setMensaje({ texto: '❌ Error al guardar el plan', tipo: 'error' });
+      console.error(err);
+      setMensaje({ texto: '❌ Error al guardar el plan: ' + err.message, tipo: 'error' });
     } finally {
       setLoading(false);
     }

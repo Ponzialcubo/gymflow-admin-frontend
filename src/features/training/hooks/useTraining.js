@@ -1,7 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
-
-const API_URL = 'http://localhost:3000/api';
+import { supabase } from '../../../config/supabase'; // Ajusta la ruta según tu estructura
 
 export const useTraining = (onBack) => {
   const [socios, setSocios] = useState([]);
@@ -17,17 +15,22 @@ export const useTraining = (onBack) => {
 
   const diasSemana = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 
+  // Carga inicial de datos
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
         const [resS, resE] = await Promise.all([
-          axios.get(`${API_URL}/usuarios`),
-          axios.get(`${API_URL}/ejercicios`)
+          supabase.from('usuarios').select('id, nombre').eq('rol', 'socio').eq('activo', true).order('nombre'),
+          supabase.from('ejercicios').select('id, nombre').order('nombre')
         ]);
-        setSocios(resS.data);
-        setEjercicios(resE.data);
+
+        if (resS.error) throw resS.error;
+        if (resE.error) throw resE.error;
+
+        setSocios(resS.data || []);
+        setEjercicios(resE.data || []);
         
-        if(resS.data.length > 0 && resE.data.length > 0) {
+        if(resS.data?.length > 0 && resE.data?.length > 0) {
           setForm(prev => ({
             ...prev,
             id_usuario: resS.data[0].id,
@@ -35,7 +38,7 @@ export const useTraining = (onBack) => {
           }));
         }
       } catch (err) {
-        setMensaje({ texto: '❌ Fallo en la conexión con la API', tipo: 'error' });
+        setMensaje({ texto: '❌ Fallo al conectar con Supabase', tipo: 'error' });
       }
     };
     fetchInitialData();
@@ -56,11 +59,24 @@ export const useTraining = (onBack) => {
 
     setLoading(true);
     try {
-      // Operación Atómica Masiva
-      await Promise.all(diasSeleccionados.map(dia => 
-        axios.post(`${API_URL}/rutinas`, { ...form, dia_semana: dia })
-      ));
+      // PREPARACIÓN DE LA INSERCIÓN MASIVA
+      // Creamos un array de objetos, uno por cada día seleccionado
+      const nuevasRutinas = diasSeleccionados.map(dia => ({
+        id_usuario: form.id_usuario,
+        id_ejercicio: form.id_ejercicio,
+        series: parseInt(form.series),
+        repeticiones: form.repeticiones.toString(), // Por si acaso es un varchar en tu DB
+        dia_semana: dia
+      }));
 
+      // Una sola petición a Supabase para insertar todo el array
+      const { error } = await supabase
+        .from('rutinas')
+        .insert(nuevasRutinas);
+
+      if (error) throw error;
+
+      // Feedback visual para el historial reciente
       const socioNombre = socios.find(s => s.id == form.id_usuario)?.nombre;
       const ejercicioNombre = ejercicios.find(ex => ex.id == form.id_ejercicio)?.nombre;
       
@@ -73,9 +89,11 @@ export const useTraining = (onBack) => {
 
       setMensaje({ texto: `✅ Planificación asignada con éxito`, tipo: 'success' });
       setDiasSeleccionados([]);
+      
       setTimeout(() => setMensaje({ texto: '', tipo: '' }), 4000);
     } catch (err) {
-      setMensaje({ texto: '❌ Error al guardar la rutina', tipo: 'error' });
+      console.error(err);
+      setMensaje({ texto: '❌ Error al guardar la rutina: ' + err.message, tipo: 'error' });
     } finally {
       setLoading(false);
     }

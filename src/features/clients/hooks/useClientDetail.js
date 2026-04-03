@@ -1,7 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
-
-const API_URL = 'http://localhost:3000/api';
+import { supabase } from '../../../config/supabase'; // Ajusta la ruta según tu estructura
 
 export const useClientDetail = (socioId, onBack) => {
   // --- ESTADOS DE DATOS ---
@@ -23,35 +21,58 @@ export const useClientDetail = (socioId, onBack) => {
   const [newRutina, setNewRutina] = useState({ id_ejercicio: '', dia_semana: 'Lunes', series: '', repeticiones: '' });
 
   const fetchData = useCallback(async () => {
+    if (!socioId) return;
     setLoading(true);
     try {
-      const [resP, resR, resM, resE] = await Promise.all([
-        axios.get(`${API_URL}/socios/${socioId}/perfil`),
-        axios.get(`${API_URL}/socios/${socioId}/rutinas-historial`),
-        axios.get(`${API_URL}/socios/${socioId}/mediciones`),
-        axios.get(`${API_URL}/ejercicios`) 
+      // Ejecutamos todo en paralelo como hacías en el Node
+      const [resUser, resDieta, resSub, resRutinas, resMediciones, resEjercicios] = await Promise.all([
+        // 1. Datos básicos del usuario
+        supabase.from('usuarios').select('*').eq('id', socioId).single(),
+        // 2. Última dieta asignada
+        supabase.from('dietas').select('*').eq('id_usuario', socioId).order('fecha_creacion', { ascending: false }).limit(1).maybeSingle(),
+        // 3. Suscripción activa
+        supabase.from('suscripciones').select('*').eq('id_usuario', socioId).eq('estado', 'activo').maybeSingle(),
+        // 4. Historial de rutinas con JOIN a ejercicios
+        supabase.from('rutinas').select('id, dia_semana, series, repeticiones, fecha_asignacion, ejercicios(nombre, grupo_muscular)').eq('id_usuario', socioId).order('fecha_asignacion', { ascending: false }),
+        // 5. Mediciones
+        supabase.from('mediciones').select('*').eq('id_usuario', socioId).order('fecha_medicion', { ascending: false }),
+        // 6. Catálogo de ejercicios (para los selects de los modales)
+        supabase.from('ejercicios').select('*').order('nombre')
       ]);
-      setPerfil(resP.data);
-      setRutinas(resR.data);
-      setMediciones(resM.data);
-      setEjerciciosCatalogo(resE.data);
-      setEditData({ nombre: resP.data.usuario.nombre, email: resP.data.usuario.email });
+
+      // Estructuramos el "perfil" tal como lo esperaba tu componente
+      setPerfil({
+        usuario: resUser.data,
+        dieta: resDieta.data,
+        suscripcion: resSub.data
+      });
+
+      setRutinas(resRutinas.data || []);
+      setMediciones(resMediciones.data || []);
+      setEjerciciosCatalogo(resEjercicios.data || []);
+      
+      if (resUser.data) {
+        setEditData({ nombre: resUser.data.nombre, email: resUser.data.email });
+      }
+
     } catch (err) {
-      console.error("Error al sincronizar datos:", err);
+      console.error("Error al sincronizar datos del socio:", err.message);
     } finally {
       setLoading(false);
     }
   }, [socioId]);
 
   useEffect(() => {
-    if (socioId) fetchData();
-  }, [socioId, fetchData]);
+    fetchData();
+  }, [fetchData]);
 
-  // --- MANEJADORES DE EVENTOS ---
+  // --- MANEJADORES DE EVENTOS (MUTACIONES) ---
+
   const handleBaja = async () => {
     if (window.confirm("¿Confirmas la baja del socio? No podrá volver a entrar a la App.")) {
       try {
-        await axios.put(`${API_URL}/usuarios/${socioId}/baja`);
+        const { error } = await supabase.from('usuarios').update({ activo: false }).eq('id', socioId);
+        if (error) throw error;
         if (onBack) onBack();
       } catch (err) { alert("Error al procesar la baja."); }
     }
@@ -60,7 +81,8 @@ export const useClientDetail = (socioId, onBack) => {
   const handleEditSocio = async (e) => {
     e.preventDefault();
     try {
-      await axios.put(`${API_URL}/usuarios/${socioId}`, editData);
+      const { error } = await supabase.from('usuarios').update(editData).eq('id', socioId);
+      if (error) throw error;
       setEditModalOpen(false);
       fetchData();
     } catch (err) { alert("Error al actualizar datos."); }
@@ -69,12 +91,13 @@ export const useClientDetail = (socioId, onBack) => {
   const handleAddMedicion = async (e) => {
     e.preventDefault();
     try {
-      await axios.post(`${API_URL}/mediciones`, {
+      const { error } = await supabase.from('mediciones').insert([{
         id_usuario: socioId,
         peso_kg: parseFloat(newMedicion.peso_kg),
         grasa_porcentaje: parseFloat(newMedicion.grasa_porcentaje),
         notas_monitor: newMedicion.notas_monitor
-      });
+      }]);
+      if (error) throw error;
       setIsMedicionModalOpen(false);
       setNewMedicion({ peso_kg: '', grasa_porcentaje: '', notas_monitor: '' });
       fetchData();
@@ -84,7 +107,8 @@ export const useClientDetail = (socioId, onBack) => {
   const handleAddDieta = async (e) => {
     e.preventDefault();
     try {
-      await axios.post(`${API_URL}/dietas`, { ...newDieta, id_usuario: socioId });
+      const { error } = await supabase.from('dietas').insert([{ ...newDieta, id_usuario: socioId }]);
+      if (error) throw error;
       setIsDietaModalOpen(false);
       fetchData();
     } catch (err) { alert("Error al asignar dieta."); }
@@ -93,7 +117,14 @@ export const useClientDetail = (socioId, onBack) => {
   const handleAddRutina = async (e) => {
     e.preventDefault();
     try {
-      await axios.post(`${API_URL}/rutinas`, { ...newRutina, id_usuario: socioId });
+      const { error } = await supabase.from('rutinas').insert([{ 
+        id_ejercicio: newRutina.id_ejercicio,
+        dia_semana: newRutina.dia_semana,
+        series: parseInt(newRutina.series),
+        repeticiones: newRutina.repeticiones,
+        id_usuario: socioId 
+      }]);
+      if (error) throw error;
       setIsRutinaModalOpen(false);
       setNewRutina({ id_ejercicio: '', dia_semana: 'Lunes', series: '', repeticiones: '' });
       fetchData();
