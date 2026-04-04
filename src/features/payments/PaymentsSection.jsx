@@ -1,9 +1,10 @@
+import React from 'react';
 import { usePayments } from './hooks/usePayments';
 import PaymentsHeader from './components/PaymentsHeader';
 import PaymentsTable from './components/PaymentsTable';
 import AddSubscriptionModal from './components/AddSubscriptionModal';
 
-// 1. Importamos nuestra función externa
+// 1. IMPORTAMOS TU NUEVA HERRAMIENTA CREADA EN EL PASO 1
 import { generatePaymentsPDF } from './utils/pdfExport'; 
 
 export default function PaymentsSection() {
@@ -22,7 +23,7 @@ export default function PaymentsSection() {
     <div className="space-y-8 animate-in fade-in duration-700 pb-20">
       <div className="bg-white p-8 md:p-10 rounded-[3rem] shadow-2xl shadow-blue-900/5 border border-slate-100">
         
-        {/* 2. Le pasamos la función al Header mandándole los datos */}
+        {/* 2. LE PASAMOS LA FUNCIÓN AL HEADER Y LE DAMOS LOS DATOS (subscriptions) */}
         <PaymentsHeader 
           onOpenModal={() => setIsModalOpen(true)} 
           onExportPDF={() => generatePaymentsPDF(subscriptions)} 
