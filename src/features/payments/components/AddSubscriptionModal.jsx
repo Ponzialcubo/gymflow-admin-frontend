@@ -1,4 +1,18 @@
+import { useEffect } from 'react';
+
 export default function AddSubscriptionModal({ isOpen, onClose, users, newSub, setNewSub, onSubmit }) {
+  
+  // Efecto para autocompletar el precio según el plan elegido
+  useEffect(() => {
+    let precioSugerido = 0;
+    if (newSub.tipo_plan === 'Basic') precioSugerido = 19.99;
+    if (newSub.tipo_plan === 'Estándar') precioSugerido = 29.99;
+    if (newSub.tipo_plan === 'Pro') precioSugerido = 49.99;
+    
+    // Solo actualizamos si el plan cambió y el usuario no ha metido un precio manual
+    setNewSub(prev => ({ ...prev, precio: precioSugerido }));
+  }, [newSub.tipo_plan, setNewSub]);
+
   if (!isOpen) return null;
 
   return (
@@ -12,7 +26,7 @@ export default function AddSubscriptionModal({ isOpen, onClose, users, newSub, s
             <label className="text-[10px] font-black text-blue-600 uppercase ml-1">Seleccionar Socio</label>
             <select 
               required
-              className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl text-sm font-bold outline-none focus:border-blue-500"
+              className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl text-base font-bold outline-none focus:border-blue-500"
               value={newSub.id_usuario}
               onChange={e => setNewSub({...newSub, id_usuario: e.target.value})}
             >
@@ -25,20 +39,22 @@ export default function AddSubscriptionModal({ isOpen, onClose, users, newSub, s
             <div className="space-y-2">
               <label className="text-[10px] font-black text-blue-600 uppercase ml-1">Plan</label>
               <select 
-                className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl text-sm font-bold"
+                className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl text-base font-bold"
                 value={newSub.tipo_plan}
                 onChange={e => setNewSub({...newSub, tipo_plan: e.target.value})}
               >
-                <option value="Mensual">Mensual</option>
-                <option value="Trimestral">Trimestral</option>
-                <option value="Anual">Anual</option>
+                {/* Opciones Estandarizadas */}
+                <option value="Basic">Basic</option>
+                <option value="Estándar">Estándar</option>
+                <option value="Pro">Pro</option>
               </select>
             </div>
             <div className="space-y-2">
               <label className="text-[10px] font-black text-blue-600 uppercase ml-1">Importe (€)</label>
               <input 
                 type="number" 
-                className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl text-sm font-bold"
+                step="0.01"
+                className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl text-base font-bold"
                 value={newSub.precio}
                 onChange={e => setNewSub({...newSub, precio: e.target.value})}
               />
@@ -47,7 +63,7 @@ export default function AddSubscriptionModal({ isOpen, onClose, users, newSub, s
 
           <div className="flex gap-4 pt-4">
             <button type="button" onClick={onClose} className="flex-1 py-4 text-slate-400 font-black text-[10px] uppercase">Cancelar</button>
-            <button type="submit" className="flex-1 py-4 bg-blue-600 text-white rounded-2xl text-[10px] font-black uppercase shadow-lg shadow-blue-100">Activar</button>
+            <button type="submit" className="flex-1 py-4 bg-blue-600 text-white rounded-2xl text-[10px] font-black uppercase shadow-lg shadow-blue-100 hover:bg-blue-700 transition-colors">Activar Plan</button>
           </div>
         </form>
       </div>

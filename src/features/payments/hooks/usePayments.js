@@ -1,15 +1,17 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from "../../../config/supabase";
+
 export const usePayments = () => {
   const [subscriptions, setSubscriptions] = useState([]);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   
+  // Inicializamos con el plan 'Basic' como defecto para que cuadre con el modal
   const [newSub, setNewSub] = useState({
     id_usuario: '',
-    tipo_plan: 'Mensual',
-    precio: 50,
+    tipo_plan: 'Basic',
+    precio: 19.99,
     estado: 'activo'
   });
 
@@ -17,7 +19,6 @@ export const usePayments = () => {
     try {
       setLoading(true);
       
-      // Llamadas directas a Supabase
       const [resSubs, resUsers] = await Promise.all([
         supabase
           .from('suscripciones')
@@ -49,25 +50,40 @@ export const usePayments = () => {
   const handleAddSubscription = async (e) => {
     e.preventDefault();
     try {
-      // Calculamos la fecha de expiración (1 mes por defecto, igual que en tu Node)
+      // 1. REGLA DE NEGOCIO: Desactivar cualquier suscripción previa del usuario
+      const { error: updateError } = await supabase
+        .from('suscripciones')
+        .update({ estado: 'cancelado' })
+        .eq('id_usuario', newSub.id_usuario)
+        .eq('estado', 'activo'); // Solo cancelamos las que estuvieran activas
+
+      if (updateError) {
+         console.warn("No se pudo actualizar el estado previo o no existía:", updateError);
+         // No lanzamos error aquí para permitir que el flujo continúe si es un socio nuevo
+      }
+
+      // 2. Calculamos la fecha de expiración (1 mes por defecto)
       let fechaExpiracion = new Date();
       fechaExpiracion.setMonth(fechaExpiracion.getMonth() + 1);
       
-      const { error } = await supabase
+      // 3. Insertamos la nueva suscripción
+      const { error: insertError } = await supabase
         .from('suscripciones')
         .insert([{ 
             id_usuario: newSub.id_usuario, 
             tipo_plan: newSub.tipo_plan, 
             fecha_fin: fechaExpiracion.toISOString(), 
-            precio: newSub.precio, 
+            precio: parseFloat(newSub.precio), // Forzamos que sea un número
             estado: 'activo' 
         }]);
 
-      if (error) throw error;
+      if (insertError) throw insertError;
 
+      // 4. Limpieza y recarga
       setIsModalOpen(false);
-      setNewSub({ id_usuario: '', tipo_plan: 'Mensual', precio: 50, estado: 'activo' });
-      fetchData(); // Recargamos la tabla
+      setNewSub({ id_usuario: '', tipo_plan: 'Basic', precio: 19.99, estado: 'activo' });
+      fetchData(); 
+      
     } catch (err) {
       console.error(err);
       alert("Error al procesar la suscripción: " + err.message);
