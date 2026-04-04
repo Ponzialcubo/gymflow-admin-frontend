@@ -1,6 +1,7 @@
 import React from 'react';
 
-export default function PaymentsHeader({ onOpenModal }) {
+// Añadimos onExportPDF a las props
+export default function PaymentsHeader({ onOpenModal, onExportPDF }) {
   return (
     <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8 mb-12">
       
@@ -20,10 +21,10 @@ export default function PaymentsHeader({ onOpenModal }) {
       {/* Acciones Rápidas */}
       <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto">
         <button 
-          className="px-8 py-4 bg-white border-2 border-slate-100 text-slate-600 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-50 transition-all shadow-sm"
-          onClick={() => window.print()}
+          className="px-8 py-4 bg-white border-2 border-slate-100 text-slate-600 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-50 transition-all shadow-sm flex items-center justify-center gap-2"
+          onClick={onExportPDF} // <-- Aquí llamamos a la función
         >
-          📄 Exportar PDF
+          <span className="text-base">📄</span> Exportar PDF
         </button>
 
         <button 

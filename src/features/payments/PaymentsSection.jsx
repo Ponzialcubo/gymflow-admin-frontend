@@ -3,6 +3,9 @@ import PaymentsHeader from './components/PaymentsHeader';
 import PaymentsTable from './components/PaymentsTable';
 import AddSubscriptionModal from './components/AddSubscriptionModal';
 
+// 1. Importamos nuestra función externa
+import { generatePaymentsPDF } from './utils/pdfExport'; 
+
 export default function PaymentsSection() {
   const { 
     subscriptions, users, loading, isModalOpen, setIsModalOpen, 
@@ -19,7 +22,11 @@ export default function PaymentsSection() {
     <div className="space-y-8 animate-in fade-in duration-700 pb-20">
       <div className="bg-white p-8 md:p-10 rounded-[3rem] shadow-2xl shadow-blue-900/5 border border-slate-100">
         
-        <PaymentsHeader onOpenModal={() => setIsModalOpen(true)} />
+        {/* 2. Le pasamos la función al Header mandándole los datos */}
+        <PaymentsHeader 
+          onOpenModal={() => setIsModalOpen(true)} 
+          onExportPDF={() => generatePaymentsPDF(subscriptions)} 
+        />
         
         <PaymentsTable subscriptions={subscriptions} />
 
