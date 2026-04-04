@@ -1,5 +1,6 @@
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+// 1. CAMBIAMOS LA FORMA DE IMPORTAR LA TABLA
+import autoTable from 'jspdf-autotable';
 
 export const generatePaymentsPDF = (subscriptions) => {
   const doc = new jsPDF();
@@ -26,8 +27,8 @@ export const generatePaymentsPDF = (subscriptions) => {
     sub.fecha_fin ? new Date(sub.fecha_fin).toLocaleDateString() : 'Indefinido'
   ]);
 
-  // Dibujar tabla
-  doc.autoTable({
+  // 2. CAMBIAMOS LA FORMA DE LLAMAR A LA TABLA (autoTable en lugar de doc.autoTable)
+  autoTable(doc, {
     head: [tableColumn],
     body: tableRows,
     startY: 40,
