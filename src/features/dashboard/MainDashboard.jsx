@@ -1,13 +1,15 @@
-import React, { useState } from 'react'; // <-- AÑADIMOS useState
+import React, { useState } from 'react';
 import { useDashboard } from './hooks/useDashboard';
 import StatsGrid from './components/StatsGrid';
 import ClassesSchedule from './components/ClassesSchedule';
 import DashboardSidebar from './components/DashboardSidebar';
 import QuickActions from './components/QuickActions';
 
-// IMPORTAMOS EL MODAL BASÁNDONOS EN TU ÁRBOL DE CARPETAS
 import AddClientModal from '../clients/components/AddClientModal'; 
-import PaymentModal from '../payments/components/modals/PaymentModal';
+// 1. IMPORTAMOS EL MODAL CORRECTO Y SU HOOK
+import AddSubscriptionModal from '../payments/components/AddSubscriptionModal';
+import { usePayments } from '../payments/hooks/usePayments';
+
 import NoticeModal from './components/modals/NoticeModal'; 
 import SupportModal from './components/modals/SupportModal';
 import DocModal from './components/modals/DocModal';
@@ -15,7 +17,9 @@ import DocModal from './components/modals/DocModal';
 export default function MainDashboard() {
   const { stats, clases, loading, fetchDashboardData} = useDashboard();
   
-  // ESTADOS PARA CONTROLAR LOS MODALES
+  // 2. EXTRAEMOS LA LÓGICA DE PAGOS PARA QUE EL MODAL FUNCIONE AQUÍ
+  const { users, newSub, setNewSub, handleAddSubscription } = usePayments();
+  
   const [isAddClientOpen, setIsAddClientOpen] = useState(false);
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const [isNoticeOpen, setIsNoticeOpen] = useState(false);
@@ -39,7 +43,6 @@ export default function MainDashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
           
           <div className="lg:col-span-2 flex flex-col">
-            {/* PASAMOS LAS FUNCIONES AL COMPONENTE QUICKACTIONS */}
             <QuickActions 
               onOpenNuevoSocio={() => setIsAddClientOpen(true)}
               onOpenPago={() => setIsPaymentOpen(true)}
@@ -61,7 +64,6 @@ export default function MainDashboard() {
 
       {/* RENDERIZADO CONDICIONAL DE MODALES */}
       
-      {/* 1. Modal de Nuevo Socio */}
       {isAddClientOpen && (
         <AddClientModal 
           isOpen={isAddClientOpen} 
@@ -70,16 +72,23 @@ export default function MainDashboard() {
         />
       )}
 
-      {/* 2. Modal de Pagos */}
+      {/* 3. SUSTITUIMOS EL MODAL ANTIGUO POR EL NUEVO */}
       {isPaymentOpen && (
-        <PaymentModal 
+        <AddSubscriptionModal 
           isOpen={isPaymentOpen} 
           onClose={() => setIsPaymentOpen(false)} 
-          onPaymentAdded={fetchDashboardData} 
+          users={users}
+          newSub={newSub}
+          setNewSub={setNewSub}
+          onSubmit={async (e) => {
+            // Ejecutamos la función de Supabase y luego recargamos el Dashboard
+            await handleAddSubscription(e);
+            setIsPaymentOpen(false);
+            fetchDashboardData(); 
+          }}
         />
       )}
 
-      {/* 3. Modal de Avisos */}
       {isNoticeOpen && (
         <NoticeModal 
           isOpen={isNoticeOpen} 
@@ -88,7 +97,6 @@ export default function MainDashboard() {
         />
       )}
 
-      {/* 4. Modal de Soporte */}
       {isSupportOpen && (
         <SupportModal 
           isOpen={isSupportOpen} 
@@ -96,7 +104,6 @@ export default function MainDashboard() {
         />
       )}
 
-      {/* 5. Modal de Documentacion */}
       <DocModal 
         isOpen={isDocOpen} 
         onClose={() => setIsDocOpen(false)} 
