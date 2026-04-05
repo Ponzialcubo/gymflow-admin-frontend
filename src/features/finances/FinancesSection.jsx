@@ -1,4 +1,5 @@
-import { useFinances } from './hooks/useFinances';
+import React from 'react'; // <--- Importante añadir esto siempre
+import { useFinances } from './hooks/useFinances'; 
 import FinanceHeader from './components/FinanceHeader'; 
 import FinanceTable from './components/FinanceTable';
 import FinanceFooter from './components/FinanceFooter';
@@ -13,7 +14,7 @@ export default function FinancesSection() {
   );
 
   return (
-    <div className="space-y-10 animate-in fade-in slide-in-from-bottom-6 duration-1000 pb-20">
+    <div className="space-y-4 animate-in fade-in slide-in-from-bottom-6 duration-700 pb-0">
       <FinanceHeader stats={stats} />
       <FinanceTable subscriptions={subscriptions} onRefresh={refresh} />
       <FinanceFooter total={stats.total} />
