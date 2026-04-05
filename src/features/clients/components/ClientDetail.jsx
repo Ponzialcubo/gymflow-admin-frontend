@@ -43,45 +43,48 @@ export default function ClientDetail({ socioId, onBack }) {
         {/* COLUMNA DE DATOS BIOMÉTRICOS Y PLANES */}
         <div className="lg:col-span-1 space-y-8">
           <ClientProfileCard usuario={usuario} suscripcion={suscripcion} />
-          <ClientNutritionCard dieta={dieta} onOpenDietaModal={() => setIsDietaModalOpen(true)} />
-          <ClientMeasurementsHistory mediciones={mediciones} onOpenModal={() => setIsMedicionModalOpen(true)} />
+          {/* Protección para la dieta */}
+          <ClientNutritionCard dieta={dieta || null} onOpenDietaModal={() => setIsDietaModalOpen(true)} />
+          {/* Protección garantizando que mediciones siempre sea un array */}
+          <ClientMeasurementsHistory mediciones={mediciones || []} onOpenModal={() => setIsMedicionModalOpen(true)} />
         </div>
 
         {/* COLUMNA DERECHA: ENTRENAMIENTO */}
-        <ClientWorkoutPlan rutinas={rutinas} onOpenRutinaModal={() => setIsRutinaModalOpen(true)} />
+        {/* Protección garantizando que rutinas siempre sea un array */}
+        <ClientWorkoutPlan rutinas={rutinas || []} onOpenRutinaModal={() => setIsRutinaModalOpen(true)} />
       </div>
 
-      {/* --- MODALES OPTIMIZADOS --- */}
+      {/* --- MODALES OPTIMIZADOS Y BLINDADOS --- */}
       <ClientWorkoutModal 
         isOpen={isRutinaModalOpen} 
         onClose={() => setIsRutinaModalOpen(false)} 
         onSubmit={handleAddRutina} 
-        newRutina={newRutina} 
+        newRutina={newRutina || {}} /* <-- ESCUDO ANTI-CRASH */
         setNewRutina={setNewRutina} 
-        ejerciciosCatalogo={ejerciciosCatalogo} 
+        ejerciciosCatalogo={ejerciciosCatalogo || []} 
         ordenDias={ordenDias} 
-        usuarioNombre={usuario.nombre} 
+        usuarioNombre={usuario?.nombre} 
       />
       <ClientMeasurementsModal 
         isOpen={isMedicionModalOpen} 
         onClose={() => setIsMedicionModalOpen(false)} 
         onSubmit={handleAddMedicion} 
-        newMedicion={newMedicion} 
+        newMedicion={newMedicion || {}} /* <-- ESCUDO ANTI-CRASH (Adiós error peso_kg) */
         setNewMedicion={setNewMedicion} 
-        usuarioNombre={usuario.nombre} 
+        usuarioNombre={usuario?.nombre} 
       />
       <ClientDietModal 
         isOpen={isDietaModalOpen} 
         onClose={() => setIsDietaModalOpen(false)} 
         onSubmit={handleAddDieta} 
-        newDieta={newDieta} 
+        newDieta={newDieta || {}} /* <-- ESCUDO ANTI-CRASH */
         setNewDieta={setNewDieta} 
       />
       <ClientEditModal 
         isOpen={isEditModalOpen} 
         onClose={() => setEditModalOpen(false)} 
         onSubmit={handleEditSocio} 
-        editData={editData} 
+        editData={editData || {}} /* <-- ESCUDO ANTI-CRASH */
         setEditData={setEditData} 
       />
     </div>
