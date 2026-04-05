@@ -31,13 +31,6 @@ export default function NutritionGuide() {
             <p className="text-[10px] text-slate-400 font-bold">Resto de calorías según demanda energética del entrenamiento.</p>
           </div>
         </div>
-
-        <div className="p-4 bg-amber-50 rounded-2xl border border-amber-100">
-           <p className="text-[9px] font-black text-amber-600 uppercase mb-1">⚠️ Nota Técnica</p>
-           <p className="text-[10px] text-amber-700/70 font-bold italic">
-             Asegúrate de que la diferencia entre KCAL objetivo y calculadas sea mínima.
-           </p>
-        </div>
       </div>
     </div>
   );
