@@ -1,21 +1,18 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '../../../config/supabase'; // Ajusta la ruta según tu estructura
+import { supabase } from '../../../config/supabase'; 
 
 export const useClientDetail = (socioId, onBack) => {
-  // --- ESTADOS DE DATOS ---
   const [perfil, setPerfil] = useState(null);
   const [rutinas, setRutinas] = useState([]);
   const [mediciones, setMediciones] = useState([]);
   const [ejerciciosCatalogo, setEjerciciosCatalogo] = useState([]); 
   const [loading, setLoading] = useState(true);
 
-  // --- ESTADOS DE MODALES Y FORMULARIOS ---
   const [isMedicionModalOpen, setIsMedicionModalOpen] = useState(false);
   const [isEditModalOpen, setEditModalOpen] = useState(false);
   const [isDietaModalOpen, setIsDietaModalOpen] = useState(false);
   const [isRutinaModalOpen, setIsRutinaModalOpen] = useState(false);
 
-  // 1. AÑADIDO: altura_cm e imc al estado inicial
   const [newMedicion, setNewMedicion] = useState({ peso_kg: '', altura_cm: '', imc: '', grasa_porcentaje: '', notas_monitor: '' });
   const [editData, setEditData] = useState({ nombre: '', email: '' });
   const [newDieta, setNewDieta] = useState({ nombre_dieta: '', calorias_objetivo: '', proteinas: '', carbohidratos: '', grasas: '' });
@@ -34,38 +31,25 @@ export const useClientDetail = (socioId, onBack) => {
         supabase.from('ejercicios').select('*').order('nombre')
       ]);
 
-      setPerfil({
-        usuario: resUser.data,
-        dieta: resDieta.data,
-        suscripcion: resSub.data
-      });
-
+      setPerfil({ usuario: resUser.data, dieta: resDieta.data, suscripcion: resSub.data });
       setRutinas(resRutinas.data || []);
       setMediciones(resMediciones.data || []);
       setEjerciciosCatalogo(resEjercicios.data || []);
       
-      if (resUser.data) {
-        setEditData({ nombre: resUser.data.nombre, email: resUser.data.email });
-      }
-
+      if (resUser.data) setEditData({ nombre: resUser.data.nombre, email: resUser.data.email });
     } catch (err) {
-      console.error("Error al sincronizar datos del socio:", err.message);
+      console.error("Error al sincronizar datos:", err);
     } finally {
       setLoading(false);
     }
   }, [socioId]);
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
-  // --- MANEJADORES DE EVENTOS (MUTACIONES) ---
+  useEffect(() => { fetchData(); }, [fetchData]);
 
   const handleBaja = async () => {
-    if (window.confirm("¿Confirmas la baja del socio? No podrá volver a entrar a la App.")) {
+    if (window.confirm("¿Confirmas la baja del socio?")) {
       try {
-        const { error } = await supabase.from('usuarios').update({ activo: false }).eq('id', socioId);
-        if (error) throw error;
+        await supabase.from('usuarios').update({ activo: false }).eq('id', socioId);
         if (onBack) onBack();
       } catch (err) { alert("Error al procesar la baja."); }
     }
@@ -74,22 +58,30 @@ export const useClientDetail = (socioId, onBack) => {
   const handleEditSocio = async (e) => {
     e.preventDefault();
     try {
-      const { error } = await supabase.from('usuarios').update(editData).eq('id', socioId);
-      if (error) throw error;
+      await supabase.from('usuarios').update(editData).eq('id', socioId);
       setEditModalOpen(false);
       fetchData();
-    } catch (err) { alert("Error al actualizar datos."); }
+    } catch (err) { alert("Error al actualizar."); }
   };
 
+  // --- EL ARREGLO DEL BOTÓN GUARDAR Y EL IMC ---
   const handleAddMedicion = async (e) => {
-    e.preventDefault();
+    e.preventDefault(); // Volvemos al funcionamiento normal
     try {
-      // 2. AÑADIDO: Enviamos todos los datos, incluida la altura y el IMC, a Supabase
+      const peso = parseFloat(newMedicion.peso_kg);
+      const altura = parseFloat(newMedicion.altura_cm);
+      let imcCalculado = null;
+
+      // Calculamos el IMC aquí, de forma segura
+      if (peso > 0 && altura > 0) {
+        imcCalculado = (peso / Math.pow(altura / 100, 2)).toFixed(1);
+      }
+
       const { error } = await supabase.from('mediciones').insert([{
         id_usuario: socioId,
-        peso_kg: parseFloat(newMedicion.peso_kg),
-        altura_cm: parseFloat(newMedicion.altura_cm),
-        imc: newMedicion.imc ? parseFloat(newMedicion.imc) : null,
+        peso_kg: peso,
+        altura_cm: altura,
+        imc: imcCalculado,
         grasa_porcentaje: parseFloat(newMedicion.grasa_porcentaje),
         notas_monitor: newMedicion.notas_monitor
       }]);
@@ -97,11 +89,10 @@ export const useClientDetail = (socioId, onBack) => {
       if (error) throw error;
       
       setIsMedicionModalOpen(false);
-      // 3. AÑADIDO: Vaciamos también la altura y el IMC para el siguiente registro
       setNewMedicion({ peso_kg: '', altura_cm: '', imc: '', grasa_porcentaje: '', notas_monitor: '' });
       fetchData();
     } catch (err) { 
-      console.error("Error en Supabase:", err);
+      console.error("Error en BD:", err);
       alert("Error al registrar medición."); 
     }
   };
@@ -109,8 +100,7 @@ export const useClientDetail = (socioId, onBack) => {
   const handleAddDieta = async (e) => {
     e.preventDefault();
     try {
-      const { error } = await supabase.from('dietas').insert([{ ...newDieta, id_usuario: socioId }]);
-      if (error) throw error;
+      await supabase.from('dietas').insert([{ ...newDieta, id_usuario: socioId }]);
       setIsDietaModalOpen(false);
       fetchData();
     } catch (err) { alert("Error al asignar dieta."); }
@@ -119,14 +109,10 @@ export const useClientDetail = (socioId, onBack) => {
   const handleAddRutina = async (e) => {
     e.preventDefault();
     try {
-      const { error } = await supabase.from('rutinas').insert([{ 
-        id_ejercicio: newRutina.id_ejercicio,
-        dia_semana: newRutina.dia_semana,
-        series: parseInt(newRutina.series),
-        repeticiones: newRutina.repeticiones,
-        id_usuario: socioId 
+      await supabase.from('rutinas').insert([{ 
+        id_ejercicio: newRutina.id_ejercicio, dia_semana: newRutina.dia_semana,
+        series: parseInt(newRutina.series), repeticiones: newRutina.repeticiones, id_usuario: socioId 
       }]);
-      if (error) throw error;
       setIsRutinaModalOpen(false);
       setNewRutina({ id_ejercicio: '', dia_semana: 'Lunes', series: '', repeticiones: '' });
       fetchData();
@@ -135,14 +121,9 @@ export const useClientDetail = (socioId, onBack) => {
 
   return {
     perfil, rutinas, mediciones, ejerciciosCatalogo, loading,
-    isMedicionModalOpen, setIsMedicionModalOpen,
-    isEditModalOpen, setEditModalOpen,
-    isDietaModalOpen, setIsDietaModalOpen,
-    isRutinaModalOpen, setIsRutinaModalOpen,
-    newMedicion, setNewMedicion,
-    editData, setEditData,
-    newDieta, setNewDieta,
-    newRutina, setNewRutina,
-    handleBaja, handleEditSocio, handleAddMedicion, handleAddDieta, handleAddRutina
+    isMedicionModalOpen, setIsMedicionModalOpen, isEditModalOpen, setEditModalOpen,
+    isDietaModalOpen, setIsDietaModalOpen, isRutinaModalOpen, setIsRutinaModalOpen,
+    newMedicion, setNewMedicion, editData, setEditData, newDieta, setNewDieta,
+    newRutina, setNewRutina, handleBaja, handleEditSocio, handleAddMedicion, handleAddDieta, handleAddRutina
   };
 };

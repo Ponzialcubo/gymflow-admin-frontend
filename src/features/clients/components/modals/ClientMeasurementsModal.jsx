@@ -1,19 +1,14 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 
-// Añadimos = {} a newMedicion para que nunca sea "undefined" y no rompa la app
 export default function ClientMeasurementsModal({ isOpen, onClose, onSubmit, newMedicion = {}, setNewMedicion, usuarioNombre }) {
   
-  // Calculamos el IMC protegiendo las variables con el símbolo de interrogación (?.)
-  const imcCalculado = useMemo(() => {
-    const peso = parseFloat(newMedicion?.peso_kg);
-    const alturaCm = parseFloat(newMedicion?.altura_cm);
-    
-    if (peso > 0 && alturaCm > 0) {
-      const alturaM = alturaCm / 100;
-      return (peso / (alturaM * alturaM)).toFixed(1);
-    }
-    return '--';
-  }, [newMedicion?.peso_kg, newMedicion?.altura_cm]);
+  // Solo para que el usuario lo vea en el cuadradito, pero no interfiere con el Guardado
+  const peso = parseFloat(newMedicion?.peso_kg || 0);
+  const altura = parseFloat(newMedicion?.altura_cm || 0);
+  let imcVisual = '--';
+  if (peso > 0 && altura > 0) {
+    imcVisual = (peso / Math.pow(altura / 100, 2)).toFixed(1);
+  }
 
   if (!isOpen) return null;
 
@@ -23,10 +18,8 @@ export default function ClientMeasurementsModal({ isOpen, onClose, onSubmit, new
         <h2 className="text-3xl font-black text-slate-900 tracking-tight">Nuevo Registro</h2>
         <p className="text-xs font-black text-slate-400 uppercase tracking-widest mt-1 mb-8">Biometría de {usuarioNombre}</p>
         
-        <form onSubmit={(e) => {
-          e.preventDefault();
-          onSubmit({ ...newMedicion, imc: imcCalculado !== '--' ? imcCalculado : null });
-        }} className="space-y-6">
+        {/* onSubmit limpio y directo */}
+        <form onSubmit={onSubmit} className="space-y-6">
           
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -46,7 +39,7 @@ export default function ClientMeasurementsModal({ isOpen, onClose, onSubmit, new
             </div>
             <div className="flex flex-col justify-center bg-blue-50 rounded-2xl p-4 text-center">
               <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-1">IMC Calculado</span>
-              <span className="text-2xl font-black text-blue-600">{imcCalculado}</span>
+              <span className="text-2xl font-black text-blue-600">{imcVisual}</span>
             </div>
           </div>
 
