@@ -1,3 +1,4 @@
+import React from 'react';
 import { useNutrition } from './hooks/useNutrition';
 import NutritionHeader from './components/NutritionHeader';
 import NutritionForm from './components/NutritionForm';
@@ -15,7 +16,7 @@ export default function NutritionSection() {
       <div className="bg-white rounded-[3rem] shadow-2xl shadow-blue-900/10 border border-slate-100 overflow-hidden">
         <NutritionHeader />
         
-        <div className="grid grid-cols-1 lg:grid-cols-3">
+        <div className="grid grid-cols-1 lg:grid-cols-5">
           <NutritionForm 
             socios={socios}
             form={form}

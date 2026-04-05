@@ -1,6 +1,8 @@
+import React from 'react';
+
 export default function NutritionForm({ socios, form, setForm, loading, handleSubmit, kcalCalculadas, diferenciaKcal }) {
   return (
-    <form onSubmit={handleSubmit} className="lg:col-span-2 p-8 md:p-12 space-y-8 border-r border-slate-50">
+    <form onSubmit={handleSubmit} className="lg:col-span-3 p-8 md:p-12 space-y-8 border-r border-slate-50">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div className="space-y-3">
           <label className="text-[10px] uppercase font-black text-emerald-600 tracking-widest ml-1">Socio</label>
