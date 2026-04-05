@@ -24,6 +24,10 @@ const sectionComponents = {
 const sectionTitles = {
   dashboard: 'Dashboard',
   clients: 'Gestión de Socios',
+  training: 'Entrenamientos',      
+  nutrition: 'Nutrición',          
+  exercises: 'Catálogo de Ejercicios',         
+  payments: 'Suscripciones',          
   finances: 'Caja y Finanzas',
   settings: 'Configuración'
 };
