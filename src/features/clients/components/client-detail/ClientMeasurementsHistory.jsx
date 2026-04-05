@@ -1,35 +1,69 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 
-export default function ClientMeasurementsHistory({ mediciones, onOpenModal }) {
+export default function ClientMeasurementsModal({ isOpen, onClose, onSubmit, newMedicion, setNewMedicion, usuarioNombre }) {
+  
+  // Calculamos el IMC en tiempo real basado en lo que el usuario va escribiendo
+  const imcCalculado = useMemo(() => {
+    const peso = parseFloat(newMedicion.peso_kg);
+    const alturaCm = parseFloat(newMedicion.altura_cm);
+    
+    if (peso > 0 && alturaCm > 0) {
+      const alturaM = alturaCm / 100;
+      return (peso / (alturaM * alturaM)).toFixed(1);
+    }
+    return '--';
+  }, [newMedicion.peso_kg, newMedicion.altura_cm]);
+
+  if (!isOpen) return null;
+
   return (
-    <div className="bg-white p-10 rounded-[3rem] shadow-2xl shadow-blue-900/5 border border-slate-100">
-      <h2 className="text-xl font-black text-slate-800 tracking-tighter mb-8">Evolución Física</h2>
-      <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-        {mediciones.map(m => (
-          <div key={m.id} className="p-5 bg-slate-50 rounded-3xl border border-slate-100 group hover:border-blue-200 transition-all">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                {new Date(m.fecha_medicion).toLocaleDateString()}
-              </span>
-              <span className="text-blue-600 font-black text-sm">{m.peso_kg} KG</span>
+    <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-md flex items-center justify-center z-[100] p-4">
+      {/* max-w-md para dar más espacio a los textos grandes */}
+      <div className="bg-white rounded-[3rem] p-10 w-full max-w-md shadow-2xl animate-in zoom-in duration-300">
+        <h2 className="text-3xl font-black text-slate-900 tracking-tight">Nuevo Registro</h2>
+        <p className="text-xs font-black text-slate-400 uppercase tracking-widest mt-1 mb-8">Biometría de {usuarioNombre}</p>
+        
+        {/* Interceptamos el submit para asegurarnos de que el IMC calculado se envía */}
+        <form onSubmit={(e) => {
+          e.preventDefault();
+          // Añadimos el IMC al objeto antes de enviarlo
+          onSubmit({ ...newMedicion, imc: imcCalculado !== '--' ? imcCalculado : null });
+        }} className="space-y-6">
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs font-black text-blue-600 uppercase tracking-widest block mb-2">Peso (kg)</label>
+              <input required step="0.1" type="number" className="w-full bg-slate-50 p-4 rounded-2xl font-black text-xl text-slate-800 outline-none focus:ring-2 ring-blue-100 text-center" value={newMedicion.peso_kg || ''} onChange={(e) => setNewMedicion({...newMedicion, peso_kg: e.target.value})} />
             </div>
-            <div className="flex justify-between items-center">
-              <span className="text-[10px] font-bold text-slate-400">Grasa Corporal</span>
-              <span className="text-xs font-black text-slate-700">{m.grasa_porcentaje}%</span>
+            <div>
+              {/* Añadido campo de altura */}
+              <label className="text-xs font-black text-blue-600 uppercase tracking-widest block mb-2">Altura (cm)</label>
+              <input required type="number" className="w-full bg-slate-50 p-4 rounded-2xl font-black text-xl text-slate-800 outline-none focus:ring-2 ring-blue-100 text-center" value={newMedicion.altura_cm || ''} onChange={(e) => setNewMedicion({...newMedicion, altura_cm: e.target.value})} />
             </div>
-            {m.notas_monitor && (
-              <p className="mt-3 text-[10px] text-slate-500 italic border-t border-slate-200 pt-2 font-medium">
-                "{m.notas_monitor}"
-              </p>
-            )}
           </div>
-        ))}
-        <button 
-          onClick={onOpenModal} 
-          className="w-full py-5 border-2 border-dashed border-slate-200 text-slate-300 rounded-3xl text-[10px] font-black uppercase tracking-widest hover:border-blue-300 hover:text-blue-600 transition-all"
-        >
-          + Nueva Medición
-        </button>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs font-black text-blue-600 uppercase tracking-widest block mb-2">% Grasa</label>
+              <input required step="0.1" type="number" className="w-full bg-slate-50 p-4 rounded-2xl font-black text-xl text-slate-800 outline-none focus:ring-2 ring-blue-100 text-center" value={newMedicion.grasa_porcentaje || ''} onChange={(e) => setNewMedicion({...newMedicion, grasa_porcentaje: e.target.value})} />
+            </div>
+            {/* Recuadro visual para el IMC */}
+            <div className="flex flex-col justify-center bg-blue-50 rounded-2xl p-4 text-center">
+              <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-1">IMC Calculado</span>
+              <span className="text-2xl font-black text-blue-600">{imcCalculado}</span>
+            </div>
+          </div>
+
+          <div>
+            <label className="text-xs font-black text-blue-600 uppercase tracking-widest block mb-2">Observaciones</label>
+            <textarea className="w-full bg-slate-50 p-4 rounded-2xl font-medium text-sm text-slate-800 outline-none focus:ring-2 ring-blue-100 resize-none h-24" placeholder="Feedback del monitor..." value={newMedicion.notas_monitor || ''} onChange={(e) => setNewMedicion({...newMedicion, notas_monitor: e.target.value})}></textarea>
+          </div>
+
+          <div className="flex gap-4 pt-4">
+            <button type="button" onClick={onClose} className="flex-1 py-4 text-xs font-black text-slate-400 uppercase tracking-widest hover:bg-slate-50 rounded-2xl transition-all">Cancelar</button>
+            <button type="submit" className="flex-1 py-4 bg-slate-900 text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-slate-800 transition-all shadow-xl">Guardar</button>
+          </div>
+        </form>
       </div>
     </div>
   );
