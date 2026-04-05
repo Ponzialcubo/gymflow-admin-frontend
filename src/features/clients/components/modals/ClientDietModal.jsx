@@ -1,7 +1,7 @@
 import React from 'react';
 
-export default function ClientDietModal({ isOpen, onClose, onSubmit, newDieta, setNewDieta }) {
-  if (!isOpen) return null;
+export default function ClientDietModal({ isOpen, onClose, onSubmit, newDieta = {}, setNewDieta }) {
+if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-md flex items-center justify-center z-[100] p-4">
