@@ -2,8 +2,8 @@ import React from 'react';
 
 const DashboardContent = ({ Component, activeTab, user }) => {
   if (Component) {
-    // Pasamos 'user' solo si el componente es MainDashboard, como en el original
-    const props = activeTab === 'dashboard' ? { user } : {};
+    const props = { user, activeTab }; 
+    
     return <Component {...props} />;
   }
 
