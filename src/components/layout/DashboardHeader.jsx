@@ -1,5 +1,7 @@
 import React from 'react';
 import SystemStatus from '../../features/dashboard/components/SystemStatus'; 
+// Importación simplificada porque están en la misma carpeta
+import CapacityCounter from './CapacityCounter';
 
 const DashboardHeader = ({ title, user }) => {
   return (
@@ -13,7 +15,11 @@ const DashboardHeader = ({ title, user }) => {
         </p>
       </div>
 
-      <SystemStatus />
+      {/* Contenedor para los widgets de estado */}
+      <div className="flex items-center gap-4">
+        <CapacityCounter />
+        <SystemStatus />
+      </div>
       
     </header>
   );
