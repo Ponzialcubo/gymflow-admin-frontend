@@ -2,56 +2,33 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../config/supabase';
 
 export default function ProfileSettings({ user }) {
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   
-  // Inicializamos con los datos que ya tenemos del login
+  // 1. Estado inicial
   const [profile, setProfile] = useState({
-    nombre: user?.nombre || '',
-    email: user?.email || '',
-    rol: user?.rol || 'ADMIN',
+    nombre: '',
+    email: '',
+    rol: '',
     estado: 'ACTIVO'
   });
 
+  // 2. EFECTO CRUCIAL: Si el prop 'user' cambia o llega tarde, actualizamos los inputs
   useEffect(() => {
-    const fetchDBProfile = async () => {
-      if (!user?.email) {
-        setLoading(false);
-        return;
-      }
-
-      try {
-        setLoading(true);
-        // CAMBIO CLAVE: Ahora consultamos la tabla 'usuarios'
-        const { data, error } = await supabase
-          .from('usuarios')
-          .select('*')
-          .eq('email', user.email)
-          .maybeSingle();
-
-        if (data) {
-          setProfile({
-            nombre: data.nombre || user.nombre,
-            email: data.email || user.email,
-            rol: data.rol || user.rol || 'ADMIN',
-            estado: 'ACTIVO' 
-          });
-        }
-      } catch (err) {
-        console.error("Error cargando perfil:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchDBProfile();
-  }, [user]);
+    if (user) {
+      console.log("Datos recibidos en Perfil:", user); // Para debug en consola
+      setProfile({
+        nombre: user.nombre || '',
+        email: user.email || '',
+        rol: user.rol || 'ADMIN',
+        estado: 'ACTIVO'
+      });
+    }
+  }, [user]); // Se ejecuta cada vez que 'user' cambie
 
   const handleSave = async (e) => {
     e.preventDefault();
     setSaving(true);
     try {
-      // Guardamos los cambios también en la tabla 'usuarios'
       const { error } = await supabase
         .from('usuarios')
         .update({
@@ -61,7 +38,13 @@ export default function ProfileSettings({ user }) {
         .eq('email', profile.email);
 
       if (error) throw error;
+      
+      // Actualizamos el localStorage para que el resto de la app se entere del cambio
+      const updatedUser = { ...user, nombre: profile.nombre };
+      localStorage.setItem('gymUser', JSON.stringify(updatedUser));
+      
       alert("✅ ¡Perfil actualizado correctamente!");
+      window.location.reload(); // Recargamos para refrescar el Sidebar también
     } catch (err) {
       alert("Error al guardar: " + err.message);
     } finally {
@@ -73,7 +56,7 @@ export default function ProfileSettings({ user }) {
     <div className="space-y-8 animate-in fade-in duration-700">
       <div className="bg-white p-10 md:p-12 rounded-[3rem] shadow-xl shadow-slate-200/20 border border-slate-100">
         
-        {/* Cabecera con saludo dinámico */}
+        {/* Cabecera */}
         <div className="mb-12 flex flex-col md:flex-row items-center gap-8 border-b border-slate-100 pb-10">
           <div className="relative shrink-0">
             <div className="w-28 h-28 bg-slate-100 rounded-full border-4 border-white shadow-xl flex items-center justify-center text-5xl overflow-hidden">
@@ -83,7 +66,7 @@ export default function ProfileSettings({ user }) {
           <div>
             <h3 className="text-4xl font-black text-slate-800 tracking-tight">Gestión de Perfil</h3>
             <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mt-2">
-              Bienvenida de nuevo, {profile.nombre ? profile.nombre.split(' ')[0] : 'Admin'}
+              Bienvenido de nuevo, <span className="text-blue-600">{profile.nombre.split(' ')[0] || 'Admin'}</span>
             </p>
           </div>
         </div>
@@ -104,7 +87,7 @@ export default function ProfileSettings({ user }) {
               />
             </div>
 
-            {/* Estado de Cuenta */}
+            {/* Estado */}
             <div className="space-y-3">
               <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1 block">Estado de Cuenta</label>
               <div className="w-full p-5 text-lg bg-slate-50/50 border-2 border-slate-100 rounded-2xl font-bold text-emerald-500 flex items-center gap-2">
@@ -113,7 +96,7 @@ export default function ProfileSettings({ user }) {
               </div>
             </div>
 
-            {/* Email (Bloqueado) */}
+            {/* Email */}
             <div className="space-y-3">
               <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
                 Email de Acceso <span className="text-sm">🔒</span>
@@ -126,7 +109,7 @@ export default function ProfileSettings({ user }) {
               />
             </div>
 
-            {/* Rol (Bloqueado) */}
+            {/* Rol */}
             <div className="space-y-3">
               <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
                 Rol de Sistema <span className="text-sm">🔒</span>
