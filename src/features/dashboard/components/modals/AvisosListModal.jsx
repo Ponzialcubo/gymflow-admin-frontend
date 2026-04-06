@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 // Asegúrate de que la ruta a Supabase es correcta según tu estructura
-import { supabase } from '../../../config/supabase';
+import { supabase } from '../../../../config/supabase';
 
 export default function AvisosListModal({ isOpen, onClose }) {
   const [avisos, setAvisos] = useState([]);
