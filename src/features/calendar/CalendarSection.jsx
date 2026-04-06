@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../../../config/supabase';
+import { supabase } from '../../config/supabase';
 import AddClassModal from './components/AddClassModal';
 
 export default function CalendarSection() {
