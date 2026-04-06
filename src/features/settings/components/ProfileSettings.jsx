@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../config/supabase';
 
-export default function ProfileSettings() {
+// Recibimos 'user' como prop (igual que lo hace tu Sidebar)
+export default function ProfileSettings({ user }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  
   const [profile, setProfile] = useState({
     nombre: '',
     email: '',
@@ -12,56 +14,47 @@ export default function ProfileSettings() {
   });
 
   useEffect(() => {
-    // Definimos la función de carga
-    const loadSessionAndProfile = async () => {
+    const fetchDBProfile = async () => {
+      // Si no hay user por prop, no intentamos nada
+      if (!user?.email) {
+        setLoading(false);
+        return;
+      }
+
       try {
         setLoading(true);
+        // Buscamos en la tabla empleados usando el email que ya conocemos de la App
+        const { data, error } = await supabase
+          .from('empleados')
+          .select('*')
+          .eq('email', user.email)
+          .maybeSingle();
 
-        // 1. Obtenemos la sesión actual (getSession es más rápido para el arranque)
-        const { data: { session } } = await supabase.auth.getSession();
-
-        if (session) {
-          await fetchUserData(session.user.email);
+        if (data) {
+          setProfile({
+            nombre: data.nombre || user.nombre || '',
+            email: data.email || user.email,
+            rol: data.rol || user.rol || 'ADMIN',
+            estado: data.estado || 'activo'
+          });
         } else {
-          // 2. Si no hay sesión inmediata, escuchamos cambios (por si está cargando)
-          const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
-            if (currentSession) {
-              await fetchUserData(currentSession.user.email);
-              subscription.unsubscribe(); // Dejamos de escuchar una vez lo tengamos
-            } else {
-              setLoading(false); // Definitivamente no hay nadie logueado
-            }
+          // Si no está en la DB, rellenamos con lo que viene del login
+          setProfile({
+            nombre: user.nombre || 'Administrador',
+            email: user.email,
+            rol: user.rol || 'ADMIN',
+            estado: 'activo'
           });
         }
-      } catch (error) {
-        console.error("Error en el arranque:", error);
+      } catch (err) {
+        console.error("Error cargando perfil:", err);
+      } finally {
         setLoading(false);
       }
     };
 
-    // Función interna para buscar en tu tabla de empleados
-    const fetchUserData = async (email) => {
-      const { data, error } = await supabase
-        .from('empleados')
-        .select('*')
-        .eq('email', email)
-        .maybeSingle();
-
-      if (data) {
-        setProfile({
-          nombre: data.nombre || '',
-          email: data.email,
-          rol: data.rol || 'ADMIN',
-          estado: data.estado || 'activo'
-        });
-      } else {
-        setProfile(prev => ({ ...prev, email: email }));
-      }
-      setLoading(false);
-    };
-
-    loadSessionAndProfile();
-  }, []);
+    fetchDBProfile();
+  }, [user]);
 
   const handleSave = async (e) => {
     e.preventDefault();
@@ -77,9 +70,9 @@ export default function ProfileSettings() {
         }, { onConflict: 'email' });
 
       if (error) throw error;
-      alert("✅ Perfil guardado");
-    } catch (error) {
-      alert("Error: " + error.message);
+      alert("✅ Datos guardados en la nube");
+    } catch (err) {
+      alert("Error al guardar: " + err.message);
     } finally {
       setSaving(false);
     }
@@ -87,14 +80,7 @@ export default function ProfileSettings() {
 
   if (loading) return (
     <div className="p-20 text-center animate-pulse font-black text-slate-300 uppercase tracking-widest">
-      Conectando con el núcleo...
-    </div>
-  );
-
-  // Si después de cargar no tenemos email, es que la sesión realmente no existe
-  if (!profile.email) return (
-    <div className="p-20 text-center font-black text-red-400 uppercase tracking-widest">
-      Sesión no encontrada. Por favor, vuelve a loguearte.
+      Sincronizando con la base de datos...
     </div>
   );
 
@@ -102,13 +88,16 @@ export default function ProfileSettings() {
     <div className="space-y-8 animate-in fade-in duration-700">
       <div className="bg-white p-10 md:p-12 rounded-[3rem] shadow-xl shadow-slate-200/20 border border-slate-100">
         
+        {/* CABECERA (La mantenemos igual) */}
         <div className="mb-12 flex flex-col md:flex-row items-center gap-8 border-b border-slate-100 pb-10">
-          <div className="w-28 h-28 bg-slate-100 rounded-full border-4 border-white shadow-xl flex items-center justify-center text-5xl">
-            🧑‍💼
+          <div className="relative group cursor-pointer shrink-0">
+            <div className="w-28 h-28 bg-slate-100 rounded-full border-4 border-white shadow-xl flex items-center justify-center text-5xl overflow-hidden transition-all group-hover:scale-105">
+              🧑‍💼
+            </div>
           </div>
           <div>
             <h3 className="text-4xl font-black text-slate-800 tracking-tight">Gestión de Perfil</h3>
-            <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mt-2">Configura tu identidad de administrador</p>
+            <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mt-2">Bienvenida de nuevo, {profile.nombre.split(' ')[0]}</p>
           </div>
         </div>
 
@@ -122,7 +111,6 @@ export default function ProfileSettings() {
                 onChange={(e) => setProfile({...profile, nombre: e.target.value})}
                 className="w-full p-5 text-lg bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none focus:border-blue-500 font-bold transition-all text-slate-800"
                 required
-                placeholder="Escribe tu nombre..."
               />
             </div>
 
@@ -141,7 +129,7 @@ export default function ProfileSettings() {
 
             <div className="space-y-3">
               <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">Rol 🔒</label>
-              <input type="text" value={profile.rol} readOnly className="w-full p-5 text-lg bg-slate-50/50 border-2 border-slate-100 rounded-2xl font-bold text-blue-400 cursor-not-allowed tracking-widest" />
+              <input type="text" value={profile.rol} readOnly className="w-full p-5 text-lg bg-slate-50/50 border-2 border-slate-100 rounded-2xl font-black text-blue-400 cursor-not-allowed" />
             </div>
           </div>
 
