@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../../../../config/supabase';
+import { supabase } from '../../../config/supabase';
 import AddEmployeeModal from './AddEmployeeModal';
 
 export default function StaffSettings() {
