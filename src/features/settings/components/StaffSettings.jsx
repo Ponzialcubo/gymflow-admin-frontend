@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../../../config/supabase';
+import { supabase } from '../../../../config/supabase';
 import AddEmployeeModal from './AddEmployeeModal';
 
 export default function StaffSettings() {
   const [staff, setStaff] = useState([]);
   const [loading, setLoading] = useState(true);
-  
-  // 2. Estado para abrir/cerrar el modal
   const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  // Nuevo estado para controlar qué menú de opciones está abierto
+  const [openMenuId, setOpenMenuId] = useState(null);
 
   const fetchStaff = async () => {
     try {
@@ -15,7 +16,7 @@ export default function StaffSettings() {
       const { data, error } = await supabase
         .from('empleados')
         .select('*')
-        .order('created_at', { ascending: false }); // Los más nuevos primero
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
       setStaff(data || []);
@@ -30,6 +31,40 @@ export default function StaffSettings() {
     fetchStaff();
   }, []);
 
+  // Función para eliminar un empleado
+  const handleDelete = async (id) => {
+    if (!window.confirm("¿Estás seguro de que deseas eliminar este empleado por completo?")) return;
+    
+    try {
+      const { error } = await supabase.from('empleados').delete().eq('id', id);
+      if (error) throw error;
+      
+      setOpenMenuId(null); // Cerramos el menú
+      fetchStaff(); // Recargamos la lista
+    } catch (error) {
+      alert("Error al eliminar: " + error.message);
+    }
+  };
+
+  // Función para alternar entre Activo / Inactivo
+  const handleToggleStatus = async (empleado) => {
+    const nuevoEstado = empleado.estado === 'activo' ? 'inactivo' : 'activo';
+    
+    try {
+      const { error } = await supabase
+        .from('empleados')
+        .update({ estado: nuevoEstado })
+        .eq('id', empleado.id);
+
+      if (error) throw error;
+      
+      setOpenMenuId(null); // Cerramos el menú
+      fetchStaff(); // Recargamos la lista
+    } catch (error) {
+      alert("Error al cambiar estado: " + error.message);
+    }
+  };
+
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       <div className="bg-white p-10 md:p-12 rounded-[3rem] shadow-xl shadow-slate-200/20 border border-slate-100">
@@ -41,7 +76,6 @@ export default function StaffSettings() {
             <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mt-1">Gestiona los accesos de tus empleados</p>
           </div>
           
-          {/* 3. Conectamos el botón para abrir el Modal */}
           <button 
             onClick={() => setIsModalOpen(true)}
             className="px-6 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-blue-200 transition-all active:scale-95 flex items-center gap-2"
@@ -50,15 +84,15 @@ export default function StaffSettings() {
           </button>
         </div>
 
-        {/* Lista de Empleados Dinámica */}
+        {/* Lista de Empleados */}
         {loading ? (
           <div className="text-center py-20 animate-pulse font-black text-slate-300 uppercase tracking-widest">
             Cargando equipo...
           </div>
         ) : (
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 relative">
             {staff.map((empleado) => (
-              <div key={empleado.id} className="p-6 bg-slate-50 border border-slate-100 rounded-[2rem] flex flex-col justify-between hover:border-blue-200 hover:bg-white hover:shadow-xl transition-all group">
+              <div key={empleado.id} className="p-6 bg-slate-50 border border-slate-100 rounded-[2rem] flex flex-col justify-between hover:border-blue-200 hover:bg-white hover:shadow-xl transition-all group relative">
                 
                 <div className="flex items-start justify-between mb-6">
                   <div className="flex items-center gap-4">
@@ -75,9 +109,42 @@ export default function StaffSettings() {
                     </div>
                   </div>
                   
-                  <button className="text-slate-300 hover:text-slate-800 transition-colors px-2">
-                    •••
-                  </button>
+                  {/* Contenedor del botón de opciones y el menú desplegable */}
+                  <div className="relative">
+                    <button 
+                      onClick={() => setOpenMenuId(openMenuId === empleado.id ? null : empleado.id)}
+                      className="text-slate-300 hover:text-slate-800 transition-colors px-2 py-1 rounded-lg"
+                    >
+                      •••
+                    </button>
+
+                    {/* Menú desplegable */}
+                    {openMenuId === empleado.id && (
+                      <>
+                        {/* Overlay invisible para cerrar al hacer clic fuera */}
+                        <div 
+                          className="fixed inset-0 z-10" 
+                          onClick={() => setOpenMenuId(null)}
+                        ></div>
+                        
+                        {/* Dropdown */}
+                        <div className="absolute right-0 mt-2 w-48 bg-white border border-slate-100 rounded-2xl shadow-xl z-20 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                          <button 
+                            onClick={() => handleToggleStatus(empleado)}
+                            className="w-full text-left px-5 py-3 text-xs font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 border-b border-slate-50 transition-colors"
+                          >
+                            {empleado.estado === 'activo' ? 'Dar de baja' : 'Reactivar'}
+                          </button>
+                          <button 
+                            onClick={() => handleDelete(empleado.id)}
+                            className="w-full text-left px-5 py-3 text-xs font-black uppercase tracking-widest text-red-600 hover:bg-red-50 transition-colors"
+                          >
+                            Eliminar
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </div>
 
                 <div className="pt-4 border-t border-slate-200/50 flex items-center justify-between">
@@ -100,11 +167,10 @@ export default function StaffSettings() {
 
       </div>
 
-      {/* 4. Renderizamos el Modal al final */}
       <AddEmployeeModal 
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onEmployeeAdded={fetchStaff} // Le pasamos la función para que recargue la lista
+        onEmployeeAdded={fetchStaff} 
       />
     </div>
   );
