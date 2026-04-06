@@ -7,18 +7,31 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // 1. Efecto para recuperar la sesión al cargar la app
+  // 1. Recuperar sesión y VALIDAR ROL inmediatamente
   useEffect(() => {
     const savedUser = localStorage.getItem('gymUser');
     if (savedUser) {
-      setUser(JSON.parse(savedUser));
+      const parsedUser = JSON.parse(savedUser);
+      
+      // Si el usuario en storage NO es admin, lo borramos para evitar bucles
+      if (parsedUser.rol?.toLowerCase() === 'admin') {
+        setUser(parsedUser);
+      } else {
+        localStorage.removeItem('gymUser');
+        setUser(null);
+      }
     }
     setLoading(false);
   }, []);
 
   const handleLogin = (userData) => {
-    setUser(userData);
-    localStorage.setItem('gymUser', JSON.stringify(userData));
+    // Solo permitimos el login si es admin
+    if (userData.rol?.toLowerCase() === 'admin') {
+      setUser(userData);
+      localStorage.setItem('gymUser', JSON.stringify(userData));
+    } else {
+      alert("⛔ Acceso denegado: Este panel es exclusivo para administradores.");
+    }
   };
 
   const handleLogout = () => {
@@ -26,25 +39,33 @@ export default function App() {
     localStorage.removeItem('gymUser');
   };
 
-  if (loading) return null; // O un spinner de carga profesional
+  if (loading) return null;
+
+  // Definimos si el usuario actual es un administrador válido
+  const isAdmin = user && user.rol?.toLowerCase() === 'admin';
 
   return (
     <BrowserRouter>
       <Routes>
-        {/* Si ya hay usuario, "/" redirige a dashboard automáticamente */}
+        {/* RUTA RAÍZ: 
+          Solo redirige al dashboard si es ADMIN. 
+          Si no, siempre muestra el Login.
+        */}
         <Route 
           path="/" 
-          element={user ? <Navigate to="/dashboard" /> : <LoginPage onLogin={handleLogin} />} 
+          element={isAdmin ? <Navigate to="/dashboard" replace /> : <LoginPage onLogin={handleLogin} />} 
         />
 
-        {/* Ruta Protegida: Si no hay usuario, redirige a login */}
+        {/* RUTA DASHBOARD: 
+          Si no es admin, lo manda de vuelta a la raíz (Login).
+        */}
         <Route 
           path="/dashboard/*" 
-          element={user ? <DashboardPage user={user} logout={handleLogout} /> : <Navigate to="/" />} 
+          element={isAdmin ? <DashboardPage user={user} logout={handleLogout} /> : <Navigate to="/" replace />} 
         />
 
-        {/* Comodín para rutas inexistentes */}
-        <Route path="*" element={<Navigate to="/" />} />
+        {/* Comodín: Cualquier otra ruta vuelve al inicio */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   );
