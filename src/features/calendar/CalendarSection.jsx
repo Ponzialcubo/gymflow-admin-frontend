@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../../config/supabase';
+import { supabase } from '../../../config/supabase';
 import AddClassModal from './components/AddClassModal';
 
 export default function CalendarSection() {
@@ -7,8 +7,9 @@ export default function CalendarSection() {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   
-  // Estado para filtrar por día (0 = Domingo, 1 = Lunes...)
-  // Empezamos por el día actual
+  // NUEVO: Estado para saber si estamos editando una clase existente
+  const [classToEdit, setClassToEdit] = useState(null);
+  
   const [selectedDay, setSelectedDay] = useState(new Date().getDay());
 
   const diasSemana = [
@@ -42,23 +43,37 @@ export default function CalendarSection() {
     fetchClases();
   }, []);
 
-  // Filtrar clases por el día seleccionado
-  const clasesDelDia = clases.filter(clase => {
-    const diaClase = new Date(clase.horario).getDay();
-    return diaClase === selectedDay;
-  });
+  const clasesDelDia = clases.filter(clase => new Date(clase.horario).getDay() === selectedDay);
 
   const formatTime = (dateStr) => {
-    return new Date(dateStr).toLocaleTimeString('es-ES', { 
-      hour: '2-digit', 
-      minute: '2-digit' 
-    });
+    return new Date(dateStr).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+  };
+
+  // NUEVAS FUNCIONES DE ACCIÓN
+  const handleOpenAdd = () => {
+    setClassToEdit(null); // Limpiamos para que sea una clase nueva
+    setIsModalOpen(true);
+  };
+
+  const handleOpenEdit = (clase) => {
+    setClassToEdit(clase); // Pasamos los datos de la clase a editar
+    setIsModalOpen(true);
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("¿Seguro que quieres eliminar esta sesión de la parrilla?")) return;
+    try {
+      const { error } = await supabase.from('clases_colectivas').delete().eq('id', id);
+      if (error) throw error;
+      fetchClases();
+    } catch (error) {
+      alert("Error al eliminar: " + error.message);
+    }
   };
 
   return (
     <div className="animate-in fade-in zoom-in duration-700 pb-20 w-full h-full">
       
-      {/* CABECERA Y SELECTOR DE DÍAS */}
       <div className="bg-white p-10 rounded-[3rem] shadow-xl shadow-slate-200/20 border border-slate-100 mb-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-10">
           <div>
@@ -66,14 +81,13 @@ export default function CalendarSection() {
             <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mt-1">Horarios y Gestión de Sesiones</p>
           </div>
           <button 
-            onClick={() => setIsModalOpen(true)}
+            onClick={handleOpenAdd}
             className="px-8 py-5 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl hover:bg-blue-600 transition-all active:scale-95 flex items-center gap-3"
           >
             <span className="text-xl">+</span> Programar Clase
           </button>
         </div>
 
-        {/* SELECTOR DE DÍAS TIPO APP MÓVIL */}
         <div className="flex justify-between gap-2 p-2 bg-slate-50 rounded-[2rem] border border-slate-100">
           {diasSemana.map((dia) => (
             <button
@@ -92,52 +106,62 @@ export default function CalendarSection() {
         </div>
       </div>
 
-      {/* LISTADO DE CLASES DEL DÍA */}
-      <div className="space-y-6">
+      <div>
         {loading ? (
           <div className="p-20 text-center animate-pulse font-black text-slate-300 uppercase tracking-widest">
             Sincronizando calendario...
           </div>
         ) : clasesDelDia.length > 0 ? (
-          clasesDelDia.map((clase) => (
-            <div key={clase.id} className="bg-white p-8 rounded-[2.5rem] border border-slate-100 flex items-center justify-between hover:shadow-xl hover:border-blue-200 transition-all group">
-              <div className="flex items-center gap-8">
-                {/* Hora */}
-                <div className="bg-slate-900 text-white w-24 h-24 rounded-3xl flex flex-col items-center justify-center shadow-lg">
-                  <span className="text-2xl font-black tracking-tighter">{formatTime(clase.horario)}</span>
-                  <span className="text-[9px] font-black uppercase opacity-50">Inicio</span>
-                </div>
+          /* NUEVO: grid-cols-1 para móviles, xl:grid-cols-2 para pantallas grandes */
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            {clasesDelDia.map((clase) => (
+              <div key={clase.id} className="bg-white p-8 rounded-[2.5rem] border border-slate-100 flex items-center justify-between hover:shadow-xl hover:border-blue-200 transition-all group">
+                <div className="flex items-center gap-6">
+                  <div className="bg-slate-900 text-white w-20 h-20 md:w-24 md:h-24 rounded-3xl flex flex-col items-center justify-center shadow-lg flex-shrink-0">
+                    <span className="text-xl md:text-2xl font-black tracking-tighter">{formatTime(clase.horario)}</span>
+                    <span className="text-[9px] font-black uppercase opacity-50">Inicio</span>
+                  </div>
 
-                <div>
-                  <h4 className="text-3xl font-black text-slate-800 tracking-tight group-hover:text-blue-600 transition-colors">
-                    {clase.nombre_clase}
-                  </h4>
-                  <div className="flex items-center gap-4 mt-2">
-                    <span className="flex items-center gap-1.5 text-[10px] font-black text-blue-600 uppercase tracking-widest bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100">
-                      🏅 {clase.monitor_encargado}
-                    </span>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                      👥 Máx. {clase.capacidad_max} personas
-                    </span>
+                  <div>
+                    <h4 className="text-2xl md:text-3xl font-black text-slate-800 tracking-tight group-hover:text-blue-600 transition-colors">
+                      {clase.nombre_clase}
+                    </h4>
+                    <div className="flex flex-wrap items-center gap-2 md:gap-4 mt-2">
+                      <span className="flex items-center gap-1.5 text-[9px] md:text-[10px] font-black text-blue-600 uppercase tracking-widest bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100">
+                        🏅 {clase.monitor_encargado}
+                      </span>
+                      <span className="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                        👥 Máx. {clase.capacidad_max} personas
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="flex items-center gap-4">
-                <button className="w-12 h-12 rounded-2xl bg-slate-50 text-slate-400 flex items-center justify-center hover:bg-slate-900 hover:text-white transition-all">
-                  ✎
-                </button>
-                <button className="w-12 h-12 rounded-2xl bg-slate-50 text-slate-400 flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all">
-                  ✕
-                </button>
+                {/* BOTONES FUNCIONALES */}
+                <div className="flex items-center gap-2">
+                  <button 
+                    onClick={() => handleOpenEdit(clase)}
+                    className="w-12 h-12 rounded-2xl bg-slate-50 text-slate-400 flex items-center justify-center hover:bg-slate-900 hover:text-white transition-all shadow-sm"
+                    title="Editar sesión"
+                  >
+                    ✎
+                  </button>
+                  <button 
+                    onClick={() => handleDelete(clase.id)}
+                    className="w-12 h-12 rounded-2xl bg-slate-50 text-slate-400 flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all shadow-sm"
+                    title="Eliminar sesión"
+                  >
+                    ✕
+                  </button>
+                </div>
               </div>
-            </div>
-          ))
+            ))}
+          </div>
         ) : (
           <div className="p-20 bg-slate-50 rounded-[3rem] border-2 border-dashed border-slate-200 text-center">
             <p className="text-slate-400 font-black uppercase tracking-widest text-sm">No hay clases programadas para este día</p>
             <button 
-              onClick={() => setIsModalOpen(true)}
+              onClick={handleOpenAdd}
               className="mt-4 text-blue-600 font-black text-xs uppercase tracking-widest hover:underline"
             >
               + Añadir primera sesión
@@ -150,6 +174,7 @@ export default function CalendarSection() {
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
         onClassAdded={fetchClases}
+        classToEdit={classToEdit} // Pasamos la clase que queremos editar
       />
     </div>
   );
