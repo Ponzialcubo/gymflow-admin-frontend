@@ -42,8 +42,8 @@ export default function ExercisesControls({ onSearchChange, selectedMuscle, onMu
               className={`
                 font-black transition-all border-2 rounded-2xl
                 ${isTodos 
-                  ? 'px-10 py-4 text-4xl lg:text-5xl tracking-tighter' // <-- ESTILO GIGANTE PARA "TODOS"
-                  : 'px-6 py-3 text-[10px] uppercase tracking-widest'  // <-- ESTILO NORMAL PARA EL RESTO
+                  ? 'px-10 py-4 text-4xl lg:text-4xl tracking-tighter' 
+                  : 'px-6 py-3 text-[10px] uppercase tracking-widest'  
                 }
                 ${selectedMuscle === m 
                   ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-200' 
