@@ -22,9 +22,11 @@ export default function ClientsSection() {
     fetchSocios
   } = useClients();
 
+  // VISTA DE DETALLE DEL SOCIO (Al hacer clic en uno)
   if (selectedSocioId) {
     return (
-      <div className="animate-in fade-in duration-500">
+      // Actualizado a duration-700 para consistencia total
+      <div className="animate-in fade-in duration-700 pb-20">
         <ClientDetail 
           socioId={selectedSocioId} 
           onBack={() => {
@@ -36,18 +38,25 @@ export default function ClientsSection() {
     );
   }
 
+  // VISTA DE LISTADO GENERAL
   return (
-    <div className="space-y-6 animate-in fade-in duration-500 pb-20">
+    // Actualizado a duration-700 y mantenemos el espaciado
+    <div className="space-y-8 animate-in fade-in duration-700 pb-20">
+      
       <ClientsHeader 
         busqueda={busqueda} 
         setBusqueda={setBusqueda} 
         onOpenModal={() => setIsModalOpen(true)} 
       />
-      <ClientsTable 
-        loading={loading} 
-        socios={sociosFiltrados} 
-        onSelectSocio={setSelectedSocioId} 
-      />
+
+      <div className="bg-white p-8 md:p-10 rounded-[3rem] shadow-2xl shadow-slate-200/50 border border-slate-100">
+        <ClientsTable 
+          loading={loading} 
+          socios={sociosFiltrados} 
+          onSelectSocio={setSelectedSocioId} 
+        />
+      </div>
+
       <AddClientModal 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 

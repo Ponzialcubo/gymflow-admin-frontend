@@ -1,9 +1,9 @@
-import { useState } from 'react'; // <-- Asegúrate de importar useState
+import { useState } from 'react'; 
 import { useExercises } from './hooks/useExercises';
 import ExerciseCard from './components/ExerciseCard';
 import ExercisesControls from './components/ExercisesControls'; 
 import AddExerciseModal from './components/AddExerciseModal';
-import ExerciseDetailModal from './components/ExerciseDetailModal'; // <-- Importamos el nuevo modal
+import ExerciseDetailModal from './components/ExerciseDetailModal';
 
 export default function ExercisesSection() {
   const {
@@ -25,14 +25,17 @@ export default function ExercisesSection() {
   };
 
   if (loading) return (
-    <div className="p-20 text-center font-black text-slate-300 animate-pulse uppercase tracking-[0.2em]">
+    // Unificamos el color a slate-400 para que el "blink" sea igual en toda la app
+    <div className="p-20 text-center font-black text-slate-400 animate-pulse uppercase tracking-[0.2em]">
       Abriendo Bóveda de Entrenamiento...
     </div>
   );
 
   return (
-    <div className="space-y-10 animate-in fade-in duration-700 pb-20">
+    // UNIFICADO: space-y-8 y duration-700 para consistencia total
+    <div className="space-y-8 animate-in fade-in duration-700 pb-20">
       
+      {/* Controles de búsqueda y filtros */}
       <ExercisesControls 
         onSearchChange={setFilterName}
         selectedMuscle={selectedMuscle}
@@ -40,13 +43,14 @@ export default function ExercisesSection() {
         onOpenModal={() => setIsModalOpen(true)}
       />
 
+      {/* Grid de ejercicios con espaciado pro */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-8">
         {exercises.map(e => (
           <ExerciseCard 
             key={e.id} 
             exercise={e} 
             onDelete={handleDelete}
-            onView={handleViewDetails} // <-- Pasamos la función a la tarjeta
+            onView={handleViewDetails}
           />
         ))}
       </div>
@@ -60,7 +64,7 @@ export default function ExercisesSection() {
         setFormData={setNewExercise}
       />
 
-      {/* NUEVO: Modal de Detalles */}
+      {/* Modal de Detalles (Z-index superior gestionado internamente) */}
       <ExerciseDetailModal
         isOpen={isDetailModalOpen}
         onClose={() => setIsDetailModalOpen(false)}

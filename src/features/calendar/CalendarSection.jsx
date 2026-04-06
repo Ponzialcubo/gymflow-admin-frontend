@@ -46,7 +46,6 @@ export default function CalendarSection() {
     return new Date(dateStr).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
   };
 
-  // FUNCIONES DE LOS BOTONES (Aseguradas)
   const handleOpenAdd = () => {
     setClassToEdit(null); 
     setIsModalOpen(true);
@@ -69,12 +68,12 @@ export default function CalendarSection() {
   };
 
   return (
-    <div className="animate-in fade-in zoom-in duration-700 pb-20 w-full h-full">
+    // UNIFICADO: Solo fade-in, duration-700 y space-y-8 para consistencia total
+    <div className="animate-in fade-in duration-700 pb-20 space-y-8">
       
-      {/* BARRA DE HERRAMIENTAS MEJORADA */}
-      <div className="mb-10 flex flex-col xl:flex-row items-stretch gap-6">
+      {/* BARRA DE HERRAMIENTAS (Sin cambios en lógica, solo consistencia) */}
+      <div className="flex flex-col xl:flex-row items-stretch gap-6">
         
-        {/* SELECTOR DE DÍAS (Textos más grandes y mejor Hover) */}
         <div className="flex-1 flex justify-between gap-2 p-3 bg-white rounded-[2.5rem] shadow-xl shadow-slate-200/20 border border-slate-100">
           {diasSemana.map((dia) => (
             <button
@@ -94,18 +93,16 @@ export default function CalendarSection() {
           ))}
         </div>
 
-        {/* BOTÓN PROGRAMAR (Rediseñado para contraste) */}
         <button 
           onClick={handleOpenAdd}
           className="xl:w-auto w-full px-10 bg-slate-900 text-white rounded-[2.5rem] font-black text-sm uppercase tracking-widest shadow-xl shadow-slate-200 hover:bg-slate-800 transition-all active:scale-95 flex items-center justify-center gap-3 min-h-[85px]"
         >
           <span className="text-3xl">+</span> Programar Clase
         </button>
-        
       </div>
 
-      {/* LISTA DE CLASES (Grid 2 columnas - Tipografía Aumentada) */}
-      <div>
+      {/* CONTENEDOR DE CLASES */}
+      <div className="w-full">
         {loading ? (
           <div className="p-20 text-center animate-pulse font-black text-slate-300 uppercase tracking-widest">
             Sincronizando calendario...
@@ -116,19 +113,16 @@ export default function CalendarSection() {
               <div key={clase.id} className="bg-white p-10 rounded-[2.5rem] border border-slate-100 flex items-center justify-between hover:shadow-2xl hover:shadow-slate-200/60 hover:border-blue-200 transition-all group">
                 
                 <div className="flex items-center gap-8">
-                  {/* RELOJ (Suavizado el fondo a slate-800 y texto más grande) */}
                   <div className="bg-slate-800 text-white w-24 h-24 md:w-28 md:h-28 rounded-3xl flex flex-col items-center justify-center shadow-lg flex-shrink-0">
                     <span className="text-2xl md:text-3xl font-black tracking-tighter">{formatTime(clase.horario)}</span>
                     <span className="text-[10px] font-black uppercase opacity-60 tracking-widest mt-1">Inicio</span>
                   </div>
 
                   <div>
-                    {/* TÍTULO CLASE (Mucho más grande) */}
                     <h4 className="text-3xl md:text-4xl font-black text-slate-800 tracking-tight group-hover:text-blue-600 transition-colors">
                       {clase.nombre_clase}
                     </h4>
                     
-                    {/* ETIQUETAS (Mejoradas con fondo y letras más grandes) */}
                     <div className="flex flex-wrap items-center gap-3 md:gap-4 mt-4">
                       <span className="flex items-center gap-2 text-xs font-black text-blue-600 uppercase tracking-widest bg-blue-50 px-4 py-2 rounded-xl border border-blue-100">
                         🏅 {clase.monitor_encargado}
@@ -140,7 +134,6 @@ export default function CalendarSection() {
                   </div>
                 </div>
 
-                {/* BOTONES FUNCIONALES (Más grandes y con mejor hover) */}
                 <div className="flex items-center gap-3">
                   <button 
                     onClick={() => handleOpenEdit(clase)}
@@ -157,7 +150,6 @@ export default function CalendarSection() {
                     ✕
                   </button>
                 </div>
-
               </div>
             ))}
           </div>
