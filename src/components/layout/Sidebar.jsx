@@ -13,6 +13,8 @@ const MENU_GROUPS = [
   {
     title: 'Gestión Deportiva',
     items: [
+      // NUEVO: Añadimos el calendario aquí
+      { id: 'calendar', label: 'Calendario', icon: '📅' }, 
       { id: 'training', label: 'Entrenamientos', icon: '🏋️‍♂️' },
       { id: 'nutrition', label: 'Nutrición', icon: '🍎' },
       { id: 'exercises', label: 'Catálogo Ejercicios', icon: '📖' },

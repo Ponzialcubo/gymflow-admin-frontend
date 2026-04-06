@@ -9,10 +9,12 @@ import ExercisesSection from '../features/exercises/ExercisesSection';
 import PaymentsSection from '../features/payments/PaymentsSection';
 import FinancesSection from '../features/finances/FinancesSection';
 import SettingsSection from '../features/settings/SettingsSection';
+import CalendarSection from '../features/calendar/CalendarSection';
 
 const sectionComponents = {
   dashboard: MainDashboard,
   clients: ClientsSection,
+  calendar: CalendarSection, 
   training: TrainingSection,
   nutrition: NutritionSection,
   exercises: ExercisesSection,
@@ -24,6 +26,7 @@ const sectionComponents = {
 const sectionTitles = {
   dashboard: 'Dashboard',
   clients: 'Gestión de Socios',
+  calendar: 'Calendario de Clases', // <-- Añadido aquí
   training: 'Entrenamientos',      
   nutrition: 'Nutrición',          
   exercises: 'Catálogo de Ejercicios',         
