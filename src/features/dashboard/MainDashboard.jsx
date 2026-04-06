@@ -14,6 +14,7 @@ import AddNoticeModal from './components/modals/NoticeModal';
 import SupportModal from './components/modals/SupportModal';
 import DocModal from './components/modals/DocModal';
 import AvisosListModal from './components/modals/AvisosListModal'; 
+import ClassesListModal from './components/modals/ClassesListModal';
 
 export default function MainDashboard() {
   const { stats, clases, loading, fetchDashboardData} = useDashboard();
@@ -29,7 +30,7 @@ export default function MainDashboard() {
   const [isDocOpen, setIsDocOpen] = useState(false);
   // Estado para el nuevo modal panorámico que lista avisos (desde StatsGrid)
   const [isAvisosListModalOpen, setIsAvisosListModalOpen] = useState(false); 
-
+  const [isClassesModalOpen, setIsClassesModalOpen] = useState(false);
   if (loading) return (
     <div className="p-20 flex flex-col items-center justify-center space-y-4">
       <div className="w-10 h-10 border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin"></div>
@@ -55,8 +56,11 @@ export default function MainDashboard() {
               // Esta acción sigue abriendo el modal para AÑADIR un aviso nuevo
               onOpenAviso={() => setIsAddNoticeOpen(true)} 
             />
-            <ClassesSchedule clases={clases} />
-          </div>
+            <ClassesSchedule 
+              clases={clases} 
+              onOpenFullSchedule={() => setIsClassesModalOpen(true)} 
+            />          
+            </div>
 
           {/* COLUMNA DERECHA (1/3 del espacio) */}
           <div className="lg:col-span-1 flex flex-col space-y-10">
@@ -125,6 +129,13 @@ export default function MainDashboard() {
             isOpen={isAvisosListModalOpen}
             onClose={() => setIsAvisosListModalOpen(false)}
           />
+      )}
+      {/* Modal panoramico del Horario de Clases */}
+      {isClassesModalOpen && (
+         <ClassesListModal 
+            isOpen={isClassesModalOpen} 
+            onClose={() => setIsClassesModalOpen(false)} 
+         />
       )}
     </>
   );

@@ -13,9 +13,10 @@ export default function ClassesSchedule({ clases = [], onOpenFullSchedule }) {
         <span className="bg-blue-600 text-white text-[9px] font-black px-4 py-2 rounded-full uppercase tracking-tighter">Live</span>
       </div>
 
+      {/* flex-1 empuja el contenido para llenar el espacio, y mostramos MAXIMO 2 clases */}
       <div className="flex-1 space-y-3 mb-8">
         {clases && clases.length > 0 ? (
-          clases.slice(0, 4).map((clase) => (
+          clases.slice(0, 2).map((clase) => ( // <-- CAMBIO AQUÍ: slice(0, 2)
             <div key={clase.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-[1.5rem] border border-slate-100 hover:bg-white hover:shadow-md transition-all">
               <div className="flex items-center gap-4">
                 <span className="text-xs font-black text-blue-600 bg-white px-3 py-2 rounded-xl shadow-sm border border-blue-50">
@@ -30,16 +31,17 @@ export default function ClassesSchedule({ clases = [], onOpenFullSchedule }) {
             </div>
           ))
         ) : (
-          <div className="py-10 text-center">
+          <div className="py-6 text-center">
             <span className="text-4xl block mb-4 opacity-30">🧘‍♂️</span>
             <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Sin clases hoy</p>
           </div>
         )}
       </div>
 
+      {/* mt-auto asegura que el botón se quede siempre abajo del todo */}
       <button 
         onClick={onOpenFullSchedule}
-        className="w-full py-5 bg-slate-900 hover:bg-blue-600 text-white rounded-2xl text-[9px] font-black uppercase tracking-[0.2em] transition-all shadow-xl shadow-slate-200"
+        className="mt-auto w-full py-5 bg-slate-900 hover:bg-blue-600 text-white rounded-2xl text-[9px] font-black uppercase tracking-[0.2em] transition-all shadow-xl shadow-slate-200"
       >
         Ver Horario Completo
       </button>
