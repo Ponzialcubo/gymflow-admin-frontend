@@ -1,54 +1,51 @@
 import React, { useState, useEffect } from 'react';
 
 export default function CapacityCounter() {
-  const [count, setCount] = useState(31);
-  const maxCapacity = 100;
+  // Ajusta este valor manualmente ahora, o conéctalo a tus settings luego
+  const maxCapacity = 100; 
+  const [count, setCount] = useState(25);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setCount((prevCount) => {
+      setCount((prev) => {
         const chance = Math.floor(Math.random() * 3);
-        let newCount = prevCount;
-
-        if (chance === 0 && prevCount > 10) {
-          newCount = prevCount - 1; 
-        } else if (chance === 2 && prevCount < maxCapacity) {
-          newCount = prevCount + 1;
-        }
-        return newCount;
+        if (chance === 0 && prev > 5) return prev - 1;
+        if (chance === 2 && prev < maxCapacity) return prev + 1;
+        return prev;
       });
-    }, 10000); // Actualización cada 10 segundos
-
+    }, 10000);
     return () => clearInterval(interval);
-  }, []);
+  }, [maxCapacity]);
 
   const percentage = (count / maxCapacity) * 100;
 
   return (
-    <div className="flex flex-col gap-1 items-start">
-      {/* Etiqueta LIVE profesional */}
-      <div className="flex items-center gap-2 bg-blue-50 text-blue-700 px-3 py-1 rounded-full border border-blue-100 mb-1">
-        <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
-        <span className="text-[10px] font-bold uppercase tracking-widest">Live</span>
+    <div className="bg-white border border-slate-100 px-6 py-3 rounded-full shadow-sm flex items-center gap-4 h-[62px] min-w-[180px]">
+      
+      {/* Indicador LIVE sutil */}
+      <div className="flex h-2 w-2 relative">
+        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+        <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
       </div>
 
-      <div className="flex items-baseline gap-2">
-        {/* Número principal refinado */}
-        <span className="text-5xl font-extrabold text-blue-600 tracking-tighter tabular-nums">
-          {count}
-        </span>
-        
-        {/* Detalles de aforo alineados con el número */}
-        <div className="flex flex-col text-slate-500 text-sm font-medium">
-          <span className="tracking-tight">/ {maxCapacity} Máx.</span>
-          <span className="text-xs text-slate-400">{Math.round(percentage)}% Ocupado</span>
+      <div className="flex flex-col flex-1">
+        <div className="flex items-center justify-between gap-4">
+          <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Ocupación</span>
+          <div className="flex items-baseline gap-1">
+            <span className="text-lg font-black text-slate-800 tabular-nums">{count}</span>
+            <span className="text-[10px] font-bold text-slate-300">/ {maxCapacity}</span>
+          </div>
+        </div>
+
+        {/* Barra de progreso sutil */}
+        <div className="w-full h-1 bg-slate-50 rounded-full mt-1 overflow-hidden">
+          <div 
+            className="h-full bg-blue-500 rounded-full transition-all duration-1000 ease-in-out"
+            style={{ width: `${percentage}%` }}
+          />
         </div>
       </div>
       
-      {/* Subtexto descriptivo */}
-      <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide mt-1">
-        Ocupación en tiempo real
-      </p>
     </div>
   );
 }
