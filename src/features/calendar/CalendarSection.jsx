@@ -10,13 +10,13 @@ export default function CalendarSection() {
   const [selectedDay, setSelectedDay] = useState(new Date().getDay());
 
   const diasSemana = [
-    { id: 1, label: 'Lunes', short: 'L' },
-    { id: 2, label: 'Martes', short: 'M' },
-    { id: 3, label: 'Miércoles', short: 'X' },
-    { id: 4, label: 'Jueves', short: 'J' },
-    { id: 5, label: 'Viernes', short: 'V' },
-    { id: 6, label: 'Sábado', short: 'S' },
-    { id: 0, label: 'Domingo', short: 'D' },
+    { id: 1, label: 'Lunes', short: 'Lun' },
+    { id: 2, label: 'Martes', short: 'Mar' },
+    { id: 3, label: 'Miércoles', short: 'Mié' },
+    { id: 4, label: 'Jueves', short: 'Jue' },
+    { id: 5, label: 'Viernes', short: 'Vie' },
+    { id: 6, label: 'Sábado', short: 'Sáb' },
+    { id: 0, label: 'Domingo', short: 'Dom' },
   ];
 
   const fetchClases = async () => {
@@ -46,6 +46,7 @@ export default function CalendarSection() {
     return new Date(dateStr).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
   };
 
+  // FUNCIONES DE LOS BOTONES (Aseguradas)
   const handleOpenAdd = () => {
     setClassToEdit(null); 
     setIsModalOpen(true);
@@ -70,40 +71,40 @@ export default function CalendarSection() {
   return (
     <div className="animate-in fade-in zoom-in duration-700 pb-20 w-full h-full">
       
-      {/* NUEVA BARRA DE HERRAMIENTAS: Selector + Botón (Sin títulos redundantes) */}
+      {/* BARRA DE HERRAMIENTAS MEJORADA */}
       <div className="mb-10 flex flex-col xl:flex-row items-stretch gap-6">
         
-        {/* SELECTOR DE DÍAS */}
+        {/* SELECTOR DE DÍAS (Textos más grandes y mejor Hover) */}
         <div className="flex-1 flex justify-between gap-2 p-3 bg-white rounded-[2.5rem] shadow-xl shadow-slate-200/20 border border-slate-100">
           {diasSemana.map((dia) => (
             <button
               key={dia.id}
               onClick={() => setSelectedDay(dia.id)}
-              className={`flex-1 py-4 rounded-[1.5rem] flex flex-col items-center justify-center transition-all ${
+              className={`flex-1 py-5 rounded-[1.5rem] flex flex-col items-center justify-center transition-all ${
                 selectedDay === dia.id 
-                ? 'bg-slate-900 text-white shadow-lg' 
-                : 'bg-transparent text-slate-400 hover:bg-slate-50 hover:text-slate-700'
+                ? 'bg-blue-600 text-white shadow-xl shadow-blue-200/50 transform scale-105' 
+                : 'bg-transparent text-slate-400 hover:bg-slate-100 hover:text-slate-800'
               }`}
             >
-              <span className={`text-[10px] font-black uppercase tracking-widest mb-1 ${selectedDay === dia.id ? 'opacity-50' : ''}`}>
+              <span className={`text-[11px] font-black uppercase tracking-[0.2em] mb-1 ${selectedDay === dia.id ? 'opacity-80' : ''}`}>
                 {dia.short}
               </span>
-              <span className="text-sm font-black">{dia.label}</span>
+              <span className="text-lg font-black tracking-tight">{dia.label}</span>
             </button>
           ))}
         </div>
 
-        {/* BOTÓN PROGRAMAR CLASE */}
+        {/* BOTÓN PROGRAMAR (Rediseñado para contraste) */}
         <button 
           onClick={handleOpenAdd}
-          className="xl:w-auto w-full px-10 bg-blue-600 text-white rounded-[2.5rem] font-black text-xs uppercase tracking-widest shadow-xl shadow-blue-200 hover:bg-slate-900 transition-all active:scale-95 flex items-center justify-center gap-3 min-h-[80px]"
+          className="xl:w-auto w-full px-10 bg-slate-900 text-white rounded-[2.5rem] font-black text-sm uppercase tracking-widest shadow-xl shadow-slate-200 hover:bg-slate-800 transition-all active:scale-95 flex items-center justify-center gap-3 min-h-[85px]"
         >
-          <span className="text-2xl">+</span> Programar Clase
+          <span className="text-3xl">+</span> Programar Clase
         </button>
         
       </div>
 
-      {/* LISTA DE CLASES (Grid 2 columnas) */}
+      {/* LISTA DE CLASES (Grid 2 columnas - Tipografía Aumentada) */}
       <div>
         {loading ? (
           <div className="p-20 text-center animate-pulse font-black text-slate-300 uppercase tracking-widest">
@@ -112,44 +113,51 @@ export default function CalendarSection() {
         ) : clasesDelDia.length > 0 ? (
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
             {clasesDelDia.map((clase) => (
-              <div key={clase.id} className="bg-white p-8 rounded-[2.5rem] border border-slate-100 flex items-center justify-between hover:shadow-xl hover:border-blue-200 transition-all group">
-                <div className="flex items-center gap-6">
-                  <div className="bg-slate-900 text-white w-20 h-20 md:w-24 md:h-24 rounded-3xl flex flex-col items-center justify-center shadow-lg flex-shrink-0">
-                    <span className="text-xl md:text-2xl font-black tracking-tighter">{formatTime(clase.horario)}</span>
-                    <span className="text-[9px] font-black uppercase opacity-50">Inicio</span>
+              <div key={clase.id} className="bg-white p-10 rounded-[2.5rem] border border-slate-100 flex items-center justify-between hover:shadow-2xl hover:shadow-slate-200/60 hover:border-blue-200 transition-all group">
+                
+                <div className="flex items-center gap-8">
+                  {/* RELOJ (Suavizado el fondo a slate-800 y texto más grande) */}
+                  <div className="bg-slate-800 text-white w-24 h-24 md:w-28 md:h-28 rounded-3xl flex flex-col items-center justify-center shadow-lg flex-shrink-0">
+                    <span className="text-2xl md:text-3xl font-black tracking-tighter">{formatTime(clase.horario)}</span>
+                    <span className="text-[10px] font-black uppercase opacity-60 tracking-widest mt-1">Inicio</span>
                   </div>
 
                   <div>
-                    <h4 className="text-2xl md:text-3xl font-black text-slate-800 tracking-tight group-hover:text-blue-600 transition-colors">
+                    {/* TÍTULO CLASE (Mucho más grande) */}
+                    <h4 className="text-3xl md:text-4xl font-black text-slate-800 tracking-tight group-hover:text-blue-600 transition-colors">
                       {clase.nombre_clase}
                     </h4>
-                    <div className="flex flex-wrap items-center gap-2 md:gap-4 mt-2">
-                      <span className="flex items-center gap-1.5 text-[9px] md:text-[10px] font-black text-blue-600 uppercase tracking-widest bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100">
+                    
+                    {/* ETIQUETAS (Mejoradas con fondo y letras más grandes) */}
+                    <div className="flex flex-wrap items-center gap-3 md:gap-4 mt-4">
+                      <span className="flex items-center gap-2 text-xs font-black text-blue-600 uppercase tracking-widest bg-blue-50 px-4 py-2 rounded-xl border border-blue-100">
                         🏅 {clase.monitor_encargado}
                       </span>
-                      <span className="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                        👥 Máx. {clase.capacidad_max} personas
+                      <span className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase tracking-widest bg-slate-50 px-4 py-2 rounded-xl border border-slate-100">
+                        👥 Máx. {clase.capacidad_max}
                       </span>
                     </div>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                {/* BOTONES FUNCIONALES (Más grandes y con mejor hover) */}
+                <div className="flex items-center gap-3">
                   <button 
                     onClick={() => handleOpenEdit(clase)}
-                    className="w-12 h-12 rounded-2xl bg-slate-50 text-slate-400 flex items-center justify-center hover:bg-slate-900 hover:text-white transition-all shadow-sm"
+                    className="w-14 h-14 rounded-2xl bg-slate-50 text-slate-400 flex items-center justify-center hover:bg-blue-50 hover:text-blue-600 hover:border hover:border-blue-100 transition-all shadow-sm text-xl"
                     title="Editar sesión"
                   >
                     ✎
                   </button>
                   <button 
                     onClick={() => handleDelete(clase.id)}
-                    className="w-12 h-12 rounded-2xl bg-slate-50 text-slate-400 flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all shadow-sm"
+                    className="w-14 h-14 rounded-2xl bg-slate-50 text-slate-400 flex items-center justify-center hover:bg-red-50 hover:text-red-600 hover:border hover:border-red-100 transition-all shadow-sm text-xl"
                     title="Eliminar sesión"
                   >
                     ✕
                   </button>
                 </div>
+
               </div>
             ))}
           </div>
@@ -158,7 +166,7 @@ export default function CalendarSection() {
             <p className="text-slate-400 font-black uppercase tracking-widest text-sm">No hay clases programadas para este día</p>
             <button 
               onClick={handleOpenAdd}
-              className="mt-4 text-blue-600 font-black text-xs uppercase tracking-widest hover:underline"
+              className="mt-6 px-8 py-4 bg-blue-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-blue-700 transition-all shadow-lg inline-block"
             >
               + Añadir primera sesión
             </button>
@@ -166,6 +174,12 @@ export default function CalendarSection() {
         )}
       </div>
 
+      <AddClassModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        onClassAdded={fetchClases}
+        classToEdit={classToEdit} 
+      />
     </div>
   );
 }
