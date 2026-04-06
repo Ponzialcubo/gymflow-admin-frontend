@@ -6,18 +6,18 @@ import DashboardSidebar from './components/DashboardSidebar';
 import QuickActions from './components/QuickActions';
 
 import AddClientModal from '../clients/components/AddClientModal'; 
-// 1. IMPORTAMOS EL MODAL CORRECTO Y SU HOOK
 import AddSubscriptionModal from '../payments/components/AddSubscriptionModal';
 import { usePayments } from '../payments/hooks/usePayments';
 
 import NoticeModal from './components/modals/NoticeModal'; 
 import SupportModal from './components/modals/SupportModal';
 import DocModal from './components/modals/DocModal';
+import NoticesWidget from './components/NoticesWidget';
 
 export default function MainDashboard() {
   const { stats, clases, loading, fetchDashboardData} = useDashboard();
   
-  // 2. EXTRAEMOS LA LÓGICA DE PAGOS PARA QUE EL MODAL FUNCIONE AQUÍ
+  // EXTRAEMOS LA LÓGICA DE PAGOS PARA QUE EL MODAL FUNCIONE AQUÍ
   const { users, newSub, setNewSub, handleAddSubscription } = usePayments();
   
   const [isAddClientOpen, setIsAddClientOpen] = useState(false);
@@ -25,6 +25,9 @@ export default function MainDashboard() {
   const [isNoticeOpen, setIsNoticeOpen] = useState(false);
   const [isSupportOpen, setIsSupportOpen] = useState(false);
   const [isDocOpen, setIsDocOpen] = useState(false);
+
+  // Estado para forzar la actualización del widget de avisos
+  const [refreshNotices, setRefreshNotices] = useState(0);
 
   if (loading) return (
     <div className="p-20 flex flex-col items-center justify-center space-y-4">
@@ -42,7 +45,8 @@ export default function MainDashboard() {
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
           
-          <div className="lg:col-span-2 flex flex-col">
+          {/* COLUMNA IZQUIERDA/CENTRO (2/3 del espacio) */}
+          <div className="lg:col-span-2 flex flex-col space-y-10">
             <QuickActions 
               onOpenNuevoSocio={() => setIsAddClientOpen(true)}
               onOpenPago={() => setIsPaymentOpen(true)}
@@ -51,12 +55,15 @@ export default function MainDashboard() {
             <ClassesSchedule clases={clases} />
           </div>
 
-          <div className="lg:col-span-1">
-           <DashboardSidebar 
-            stats={stats} 
-            onOpenSupport={() => setIsSupportOpen(true)} 
-            onOpenDoc={() => setIsDocOpen(true)}
-          />
+          {/* COLUMNA DERECHA (1/3 del espacio) */}
+          <div className="lg:col-span-1 flex flex-col space-y-10">
+            <DashboardSidebar 
+              stats={stats} 
+              onOpenSupport={() => setIsSupportOpen(true)} 
+              onOpenDoc={() => setIsDocOpen(true)}
+            />
+            {/* AQUÍ ESTÁ EL TABLÓN DE ANUNCIOS */}
+            <NoticesWidget key={refreshNotices} />
           </div>
           
         </div>
@@ -72,7 +79,6 @@ export default function MainDashboard() {
         />
       )}
 
-      {/* 3. SUSTITUIMOS EL MODAL ANTIGUO POR EL NUEVO */}
       {isPaymentOpen && (
         <AddSubscriptionModal 
           isOpen={isPaymentOpen} 
@@ -81,7 +87,6 @@ export default function MainDashboard() {
           newSub={newSub}
           setNewSub={setNewSub}
           onSubmit={async (e) => {
-            // Ejecutamos la función de Supabase y luego recargamos el Dashboard
             await handleAddSubscription(e);
             setIsPaymentOpen(false);
             fetchDashboardData(); 
@@ -93,7 +98,10 @@ export default function MainDashboard() {
         <NoticeModal 
           isOpen={isNoticeOpen} 
           onClose={() => setIsNoticeOpen(false)} 
-          onNoticeAdded={fetchDashboardData} 
+          onNoticeAdded={() => {
+            fetchDashboardData(); // Refresca las estadísticas
+            setRefreshNotices(prev => prev + 1); // ¡ESTO ES CLAVE! Recarga el widget al instante
+          }} 
         />
       )}
 
