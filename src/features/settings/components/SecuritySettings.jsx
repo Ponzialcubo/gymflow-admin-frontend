@@ -101,7 +101,7 @@ export default function SecuritySettings() {
           </div>
           <button 
             type="button" 
-            {/* Botón aumentado a text-xs */}
+            
             className="px-6 py-4 bg-red-50 text-red-600 border border-red-100 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-red-600 hover:text-white transition-all shadow-sm"
           >
             Cerrar otras sesiones
