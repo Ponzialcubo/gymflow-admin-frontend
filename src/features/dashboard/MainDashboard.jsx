@@ -9,10 +9,11 @@ import AddClientModal from '../clients/components/AddClientModal';
 import AddSubscriptionModal from '../payments/components/AddSubscriptionModal';
 import { usePayments } from '../payments/hooks/usePayments';
 
-import NoticeModal from './components/modals/NoticeModal'; 
+// Importamos los modales necesarios
+import AddNoticeModal from './components/modals/NoticeModal'; 
 import SupportModal from './components/modals/SupportModal';
 import DocModal from './components/modals/DocModal';
-import NoticesWidget from './components/NoticesWidget';
+import AvisosListModal from './components/modals/AvisosListModal'; 
 
 export default function MainDashboard() {
   const { stats, clases, loading, fetchDashboardData} = useDashboard();
@@ -22,12 +23,12 @@ export default function MainDashboard() {
   
   const [isAddClientOpen, setIsAddClientOpen] = useState(false);
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
-  const [isNoticeOpen, setIsNoticeOpen] = useState(false);
+  // Estado para el modal de AÑADIR aviso (desde QuickActions)
+  const [isAddNoticeOpen, setIsAddNoticeOpen] = useState(false); 
   const [isSupportOpen, setIsSupportOpen] = useState(false);
   const [isDocOpen, setIsDocOpen] = useState(false);
-
-  // Estado para forzar la actualización del widget de avisos
-  const [refreshNotices, setRefreshNotices] = useState(0);
+  // Estado para el nuevo modal panorámico que lista avisos (desde StatsGrid)
+  const [isAvisosListModalOpen, setIsAvisosListModalOpen] = useState(false); 
 
   if (loading) return (
     <div className="p-20 flex flex-col items-center justify-center space-y-4">
@@ -41,7 +42,8 @@ export default function MainDashboard() {
   return (
     <>
       <div className="space-y-10 animate-in fade-in zoom-in duration-700 pb-20">
-        <StatsGrid stats={stats} />
+        {/* Pasamos la prop para abrir el modal de lista */}
+        <StatsGrid stats={stats} onOpenAvisosList={() => setIsAvisosListModalOpen(true)} />
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
           
@@ -50,7 +52,8 @@ export default function MainDashboard() {
             <QuickActions 
               onOpenNuevoSocio={() => setIsAddClientOpen(true)}
               onOpenPago={() => setIsPaymentOpen(true)}
-              onOpenAviso={() => setIsNoticeOpen(true)}
+              // Esta acción sigue abriendo el modal para AÑADIR un aviso nuevo
+              onOpenAviso={() => setIsAddNoticeOpen(true)} 
             />
             <ClassesSchedule clases={clases} />
           </div>
@@ -62,8 +65,7 @@ export default function MainDashboard() {
               onOpenSupport={() => setIsSupportOpen(true)} 
               onOpenDoc={() => setIsDocOpen(true)}
             />
-            {/* AQUÍ ESTÁ EL TABLÓN DE ANUNCIOS */}
-            <NoticesWidget key={refreshNotices} />
+            {/* AQUÍ ESTABA EL WIDGET Y HA SIDO ELIMINADO PARA DESATURAR LA COLUMNA */}
           </div>
           
         </div>
@@ -94,13 +96,13 @@ export default function MainDashboard() {
         />
       )}
 
-      {isNoticeOpen && (
-        <NoticeModal 
-          isOpen={isNoticeOpen} 
-          onClose={() => setIsNoticeOpen(false)} 
+      {isAddNoticeOpen && ( // Modal para AÑADIR aviso
+        <AddNoticeModal 
+          isOpen={isAddNoticeOpen} 
+          onClose={() => setIsAddNoticeOpen(false)} 
           onNoticeAdded={() => {
             fetchDashboardData(); // Refresca las estadísticas
-            setRefreshNotices(prev => prev + 1); // ¡ESTO ES CLAVE! Recarga el widget al instante
+            // Standalone NoticesWidget logic is removed. New list modal fetches on mount.
           }} 
         />
       )}
@@ -116,6 +118,14 @@ export default function MainDashboard() {
         isOpen={isDocOpen} 
         onClose={() => setIsDocOpen(false)} 
       />
+
+      {/* NUEVO: Modal panorámico que lista todos los avisos */}
+      {isAvisosListModalOpen && (
+          <AvisosListModal
+            isOpen={isAvisosListModalOpen}
+            onClose={() => setIsAvisosListModalOpen(false)}
+          />
+      )}
     </>
   );
 }

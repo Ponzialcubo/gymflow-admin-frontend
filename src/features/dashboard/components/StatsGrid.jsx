@@ -1,6 +1,7 @@
 import React from 'react';
 
-export default function StatsGrid({ stats }) {
+// Añadimos la prop onOpenAvisosList
+export default function StatsGrid({ stats, onOpenAvisosList }) {
   const desglose = stats?.desglosePlanes || {};
   const planes = Object.entries(desglose);
 
@@ -51,23 +52,29 @@ export default function StatsGrid({ stats }) {
         </div>
       </div>
 
-      {/* 3. Termómetro de Aforo */}
-      {/* En pantallas 'lg' (2 columnas), hacemos que esta tarjeta ocupe las 2 columnas para que no quede un hueco raro. En 'xl' vuelve a ocupar 1 */}
-      <div className="bg-slate-900 p-6 xl:p-8 rounded-[2rem] shadow-lg flex flex-col justify-between hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 relative overflow-hidden lg:col-span-2 xl:col-span-1">
-        <div className="flex justify-between items-start mb-4 relative z-10 gap-4">
+      {/* 3. Notificaciones y Avisos (Sustituye al antiguo aforo) */}
+      {/* En pantallas 'lg' (2 columnas), hacemos que esta tarjeta ocupe las 2 columnas. En 'xl' vuelve a ocupar 1 */}
+      <button 
+        onClick={onOpenAvisosList}
+        className="bg-slate-900 p-6 xl:p-8 rounded-[2rem] shadow-lg flex flex-col justify-between hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 relative overflow-hidden lg:col-span-2 xl:col-span-1 text-left group cursor-pointer"
+      >
+        <div className="flex justify-between items-start mb-4 relative z-10 gap-4 w-full">
           <div>
-            <p className="text-xs xl:text-sm font-bold text-blue-400 uppercase tracking-wide">Aforo en Tiempo Real</p>
-            <h3 className="text-4xl xl:text-5xl font-black text-white mt-3 tracking-tighter">12<span className="text-xl xl:text-2xl text-slate-400 font-bold">/100</span></h3>
+            <p className="text-xs xl:text-sm font-bold text-blue-400 uppercase tracking-wide">Notificaciones y Avisos</p>
+            {/* Aquí puedes conectar el contador real en el futuro si descargas los avisos en el hook useDashboard */}
+            <h3 className="text-4xl xl:text-5xl font-black text-white mt-3 tracking-tighter group-hover:text-blue-300 transition-colors">Tablón</h3>
           </div>
-          <span className="text-4xl xl:text-5xl opacity-90 flex-shrink-0">🔥</span>
+          <span className="text-4xl xl:text-5xl opacity-90 flex-shrink-0 group-hover:scale-110 transition-transform">📣</span>
         </div>
         <div className="w-full mt-4 relative z-10">
-          <p className="text-xs xl:text-sm font-bold text-slate-300 uppercase tracking-wide mb-2">Capacidad al 12%</p>
+          <p className="text-xs xl:text-sm font-bold text-slate-300 uppercase tracking-wide mb-2 flex items-center gap-2">
+            Ver todas las comunicaciones <span className="group-hover:translate-x-1 transition-transform">→</span>
+          </p>
           <div className="w-full h-3 bg-slate-800 rounded-full overflow-hidden">
-            <div className="h-full bg-blue-500 w-[12%] rounded-full shadow-[0_0_12px_rgba(59,130,246,0.6)]"></div>
+             <div className="h-full bg-blue-500 w-[100%] rounded-full shadow-[0_0_12px_rgba(59,130,246,0.6)]"></div>
           </div>
         </div>
-      </div>
+      </button>
       
     </div>
   );
