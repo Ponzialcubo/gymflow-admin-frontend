@@ -1,67 +1,83 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../../../config/supabase'; 
+import { supabase } from '../../../config/supabase';
 
-export default function ProfileSettings({ user }) {
+export default function ProfileSettings() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   
   const [profile, setProfile] = useState({
     nombre: '',
-    telefono: '',
     email: '',
-    rol: ''
+    rol: '',
+    estado: 'activo' // Columna que tienes en tu tabla
   });
 
-  // 1. CARGAR DATOS REALES AL MONTAR
   useEffect(() => {
-    const getProfile = async () => {
+    const getInitialData = async () => {
       try {
         setLoading(true);
-        // Suponiendo que los datos del admin están en la tabla 'empleados' 
-        // o una tabla 'perfiles' vinculada al ID de Auth
-        const { data, error } = await supabase
+
+        // 1. Obtener usuario de la sesión
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        
+        if (authError || !user) {
+          console.error("No hay usuario autenticado");
+          setLoading(false);
+          return;
+        }
+
+        // 2. Buscar en tu tabla 'empleados'
+        const { data: dbData, error: dbError } = await supabase
           .from('empleados')
           .select('*')
-          .eq('email', user?.email) // Buscamos por el email del usuario autenticado
-          .single();
+          .eq('email', user.email)
+          .maybeSingle();
 
-        if (data) {
+        if (dbData) {
           setProfile({
-            nombre: data.nombre,
-            telefono: data.telefono || '',
-            email: data.email,
-            rol: data.rol || 'ADMIN'
+            nombre: dbData.nombre || '',
+            email: dbData.email || user.email,
+            rol: dbData.rol || 'ADMIN',
+            estado: dbData.estado || 'activo'
           });
+        } else {
+          // Si no existe, usamos los datos de la sesión
+          setProfile(prev => ({
+            ...prev,
+            nombre: user.user_metadata?.full_name || 'Nuevo Administrador',
+            email: user.email,
+            rol: 'ADMIN'
+          }));
         }
       } catch (error) {
-        console.error("Error cargando perfil:", error);
+        console.error("Error crítico:", error);
       } finally {
         setLoading(false);
       }
     };
 
-    if (user?.email) getProfile();
-  }, [user]);
+    getInitialData();
+  }, []);
 
-  // 2. LOGICA DE GUARDADO REAL
   const handleSave = async (e) => {
     e.preventDefault();
     setSaving(true);
 
     try {
+      // UPSERT ajustado a tus columnas: id, nombre, rol, email, estado
       const { error } = await supabase
         .from('empleados')
-        .update({
+        .upsert({
+          email: profile.email,
           nombre: profile.nombre,
-          telefono: profile.telefono,
-          // El email y rol no los actualizamos por seguridad aquí
-        })
-        .eq('email', profile.email);
+          rol: profile.rol,
+          estado: profile.estado
+        }, { onConflict: 'email' });
 
       if (error) throw error;
-      alert("¡Perfil actualizado en la base de datos!");
+      alert("✅ Perfil actualizado correctamente");
     } catch (error) {
-      alert("Error al actualizar: " + error.message);
+      alert("Error al guardar: " + error.message);
     } finally {
       setSaving(false);
     }
@@ -69,7 +85,7 @@ export default function ProfileSettings({ user }) {
 
   if (loading) return (
     <div className="p-20 text-center animate-pulse font-black text-slate-300 uppercase tracking-widest">
-      Sincronizando perfil...
+      Sincronizando identidad...
     </div>
   );
 
@@ -77,7 +93,6 @@ export default function ProfileSettings({ user }) {
     <div className="space-y-8 animate-in fade-in duration-700">
       <div className="bg-white p-10 md:p-12 rounded-[3rem] shadow-xl shadow-slate-200/20 border border-slate-100">
         
-        {/* CABECERA */}
         <div className="mb-12 flex flex-col md:flex-row items-center gap-8 border-b border-slate-100 pb-10">
           <div className="relative group cursor-pointer shrink-0">
             <div className="w-28 h-28 bg-slate-100 rounded-full border-4 border-white shadow-xl flex items-center justify-center text-5xl overflow-hidden transition-all group-hover:scale-105">
@@ -87,16 +102,16 @@ export default function ProfileSettings({ user }) {
               </div>
             </div>
           </div>
-
           <div>
             <h3 className="text-4xl font-black text-slate-800 tracking-tight">Gestión de Perfil</h3>
             <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mt-2">Configura tu identidad de administrador</p>
           </div>
         </div>
 
-        {/* FORMULARIO */}
         <form onSubmit={handleSave} className="space-y-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            
+            {/* NOMBRE */}
             <div className="space-y-3">
               <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1 block">Nombre Completo</label>
               <input 
@@ -108,16 +123,16 @@ export default function ProfileSettings({ user }) {
               />
             </div>
 
+            {/* ESTADO (Nueva columna detectada en tu imagen) */}
             <div className="space-y-3">
-              <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1 block">Teléfono de Contacto</label>
-              <input 
-                type="text" 
-                value={profile.telefono}
-                onChange={(e) => setProfile({...profile, telefono: e.target.value})}
-                className="w-full p-5 text-lg bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none focus:border-blue-500 font-bold transition-all text-slate-800 tabular-nums"
-              />
+              <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1 block">Estado de Cuenta</label>
+              <div className="w-full p-5 text-lg bg-slate-50/50 border-2 border-slate-100 rounded-2xl font-bold text-emerald-500 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                {profile.estado.toUpperCase()}
+              </div>
             </div>
 
+            {/* EMAIL */}
             <div className="space-y-3">
               <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
                 Email de Acceso <span className="text-sm">🔒</span>
@@ -130,6 +145,7 @@ export default function ProfileSettings({ user }) {
               />
             </div>
 
+            {/* ROL */}
             <div className="space-y-3">
               <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
                 Rol de Sistema <span className="text-sm">🔒</span>
