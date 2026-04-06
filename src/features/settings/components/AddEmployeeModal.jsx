@@ -2,108 +2,127 @@ import React, { useState } from 'react';
 import { supabase } from '../../../config/supabase';
 
 export default function AddEmployeeModal({ isOpen, onClose, onEmployeeAdded }) {
-  const [formData, setFormData] = useState({ nombre: '', rol: '', email: '' });
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [formData, setFormData] = useState({
+    nombre: '',
+    email: '',
+    password: '',
+    rol: 'Entrenador'
+  });
 
   if (!isOpen) return null;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsSubmitting(true);
+    setSaving(true);
 
     try {
+      // 🎯 Guardamos en 'empleados'
       const { error } = await supabase
         .from('empleados')
-        .insert([
-          { 
-            nombre: formData.nombre, 
-            rol: formData.rol, 
-            email: formData.email,
-            estado: 'activo' // Por defecto entra activo
-          }
-        ]);
+        .insert([{
+          nombre: formData.nombre,
+          email: formData.email,
+          password: formData.password, // Asegúrate de tener esta columna en la DB
+          rol: formData.rol,
+          estado: 'activo'
+        }]);
 
       if (error) throw error;
       
-      // Si va bien, cerramos el modal, limpiamos el formulario y recargamos la lista
-      setFormData({ nombre: '', rol: '', email: '' });
+      alert("✅ Empleado registrado correctamente");
       onEmployeeAdded(); 
-      onClose();
+      onClose(); 
+      
     } catch (error) {
-      alert("Error al crear empleado: " + error.message);
+      alert("Error al registrar: " + error.message);
     } finally {
-      setIsSubmitting(false);
+      setSaving(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-[200] p-4">
-      <div className="bg-white rounded-[3rem] p-10 w-full max-w-2xl shadow-2xl animate-in zoom-in duration-300 relative">
+    <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">
+      <div className="bg-white rounded-[3rem] shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-300">
         
-        {/* Botón de cerrar */}
-        <button 
-          onClick={onClose}
-          className="absolute top-8 right-8 text-2xl text-slate-300 hover:text-slate-600 transition-colors"
-        >
-          ✕
-        </button>
-
-        <div className="mb-8 border-b border-slate-100 pb-6">
-          <h2 className="text-3xl font-black text-slate-800 tracking-tight">Nuevo Empleado</h2>
-          <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mt-1">Alta en el sistema GymFlow</p>
+        <div className="bg-slate-50 p-8 border-b border-slate-100 flex justify-between items-center">
+          <div>
+            <h3 className="text-2xl font-black text-slate-800 tracking-tight">Nuevo Empleado</h3>
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Credenciales para la App Móvil</p>
+          </div>
+          <button 
+            onClick={onClose}
+            className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all font-black shadow-sm"
+          >
+            ✕
+          </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-2">
-            <label className="text-[10px] font-black text-blue-600 uppercase tracking-widest ml-1 block">Nombre Completo</label>
-            <input 
-              type="text" 
-              required
-              className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-bold outline-none focus:border-blue-500 transition-all text-slate-700"
-              placeholder="Ej: Marcos Pérez"
-              value={formData.nombre}
-              onChange={(e) => setFormData({...formData, nombre: e.target.value})}
-            />
+        <form onSubmit={handleSubmit} className="p-8 space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            <div className="space-y-3">
+              <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Nombre Completo</label>
+              <input 
+                type="text" required
+                value={formData.nombre}
+                onChange={(e) => setFormData({...formData, nombre: e.target.value})}
+                className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none focus:border-blue-500 font-bold transition-all text-slate-800"
+                placeholder="Ej. Laura López"
+              />
+            </div>
+
+            <div className="space-y-3">
+              <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Rol / Puesto</label>
+              <select 
+                value={formData.rol}
+                onChange={(e) => setFormData({...formData, rol: e.target.value})}
+                className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none focus:border-blue-500 font-bold transition-all text-slate-700 cursor-pointer"
+              >
+                <option value="Entrenador">Entrenador Personal</option>
+                <option value="Instructor">Instructor de Clases</option>
+                <option value="Nutricionista">Nutricionista</option>
+                <option value="Recepcion">Recepción</option>
+              </select>
+            </div>
+
+            <div className="space-y-3">
+              <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Email (Acceso App)</label>
+              <input 
+                type="email" required
+                value={formData.email}
+                onChange={(e) => setFormData({...formData, email: e.target.value})}
+                className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none focus:border-blue-500 font-bold transition-all text-slate-800"
+                placeholder="entrenador@gymflow.com"
+              />
+            </div>
+
+            <div className="space-y-3">
+              <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Contraseña (Acceso App)</label>
+              <input 
+                type="text" required
+                value={formData.password}
+                onChange={(e) => setFormData({...formData, password: e.target.value})}
+                className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none focus:border-blue-500 font-bold transition-all text-slate-800"
+                placeholder="Genera una clave..."
+              />
+            </div>
           </div>
 
-          <div className="space-y-2">
-            <label className="text-[10px] font-black text-blue-600 uppercase tracking-widest ml-1 block">Especialidad / Puesto</label>
-            <input 
-              type="text" 
-              required
-              className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-bold outline-none focus:border-blue-500 transition-all text-slate-700"
-              placeholder="Ej: Entrenador Personal, Recepción..."
-              value={formData.rol}
-              onChange={(e) => setFormData({...formData, rol: e.target.value})}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-[10px] font-black text-blue-600 uppercase tracking-widest ml-1 block">Correo de Acceso</label>
-            <input 
-              type="email" 
-              required
-              className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-bold outline-none focus:border-blue-500 transition-all text-slate-700"
-              placeholder="Ej: marcos@gymflow.com"
-              value={formData.email}
-              onChange={(e) => setFormData({...formData, email: e.target.value})}
-            />
-          </div>
-
-          <div className="pt-6 flex gap-4">
+          <div className="pt-6 flex gap-4 justify-end">
             <button 
-              type="button"
+              type="button" 
               onClick={onClose}
-              className="flex-1 py-4 bg-slate-100 text-slate-500 rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-slate-200 transition-all"
+              className="px-8 py-4 bg-slate-100 text-slate-500 rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-slate-200 transition-all"
             >
               Cancelar
             </button>
             <button 
-              type="submit"
-              disabled={isSubmitting}
-              className="flex-1 py-4 bg-slate-900 text-white rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-slate-800 transition-all shadow-lg active:scale-95 disabled:opacity-50"
+              type="submit" 
+              disabled={saving}
+              className="px-8 py-4 bg-blue-600 text-white rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-blue-700 transition-all shadow-xl active:scale-95 disabled:opacity-50 flex items-center gap-2"
             >
-              {isSubmitting ? 'Guardando...' : 'Dar de Alta'}
+              {saving ? 'Guardando...' : 'Crear Acceso'}
             </button>
           </div>
         </form>

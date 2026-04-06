@@ -11,6 +11,7 @@ export default function StaffSettings() {
   const fetchStaff = async () => {
     try {
       setLoading(true);
+      // 🎯 Volvemos a tu tabla original: 'empleados'
       const { data, error } = await supabase
         .from('empleados')
         .select('*')
@@ -74,6 +75,11 @@ export default function StaffSettings() {
           <div className="text-center py-20 animate-pulse font-black text-slate-300 uppercase tracking-widest">
             Cargando equipo...
           </div>
+        ) : staff.length === 0 ? (
+          <div className="text-center py-20 border-2 border-dashed border-slate-100 rounded-[2rem]">
+            <span className="text-5xl block mb-4">👻</span>
+            <p className="text-slate-400 font-bold">Aún no hay personal registrado en el sistema.</p>
+          </div>
         ) : (
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 relative">
             {staff.map((empleado) => (
@@ -81,16 +87,13 @@ export default function StaffSettings() {
                 
                 <div className="flex items-start justify-between mb-8">
                   <div className="flex items-center gap-5">
-                    {/* Avatar más grande y letra más legible */}
                     <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-3xl font-black text-white shadow-sm
                       ${empleado.estado === 'activo' ? 'bg-slate-800' : 'bg-slate-300'}`}
                     >
                       {empleado.nombre.charAt(0)}
                     </div>
                     <div className="space-y-1">
-                      {/* Nombre aumentado a text-2xl */}
                       <h4 className="text-2xl font-black text-slate-800 tracking-tight">{empleado.nombre}</h4>
-                      {/* Rol aumentado a text-xs con un poco más de padding */}
                       <span className="inline-block text-xs font-black text-blue-600 uppercase tracking-widest bg-blue-50 px-3 py-1.5 rounded-lg">
                         {empleado.rol}
                       </span>
@@ -128,17 +131,15 @@ export default function StaffSettings() {
                 </div>
 
                 <div className="pt-5 border-t border-slate-200/50 flex items-center justify-between">
-                  {/* Email aumentado a text-sm */}
                   <p className="text-sm font-bold text-slate-500 truncate pr-4">{empleado.email}</p>
                   
-                  {/* Etiqueta de estado aumentada a text-xs */}
                   <span className={`flex items-center gap-2 text-xs font-black uppercase tracking-widest px-4 py-2 rounded-full border
                     ${empleado.estado === 'activo' 
                       ? 'bg-emerald-50 text-emerald-600 border-emerald-100' 
                       : 'bg-slate-100 text-slate-400 border-slate-200'}`}
                   >
                     <span className={`w-2 h-2 rounded-full ${empleado.estado === 'activo' ? 'bg-emerald-500' : 'bg-slate-400'}`}></span>
-                    {empleado.estado}
+                    {empleado.estado || 'activo'}
                   </span>
                 </div>
 
