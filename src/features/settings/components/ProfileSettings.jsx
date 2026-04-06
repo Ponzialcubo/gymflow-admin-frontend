@@ -4,7 +4,6 @@ import { supabase } from '../../../config/supabase';
 export default function ProfileSettings() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  
   const [profile, setProfile] = useState({
     nombre: '',
     email: '',
@@ -13,56 +12,55 @@ export default function ProfileSettings() {
   });
 
   useEffect(() => {
-    const getInitialData = async () => {
+    // Definimos la función de carga
+    const loadSessionAndProfile = async () => {
       try {
         setLoading(true);
-        
-        // 1. Obtener el usuario de la sesión (Auth)
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
-        
-        if (authError || !user) {
-          console.error("Error de Auth:", authError);
-          setLoading(false);
-          return;
-        }
 
-        console.log("Usuario autenticado:", user.email);
+        // 1. Obtenemos la sesión actual (getSession es más rápido para el arranque)
+        const { data: { session } } = await supabase.auth.getSession();
 
-        // 2. Buscar en la tabla 'empleados'
-        const { data: dbData, error: dbError } = await supabase
-          .from('empleados')
-          .select('*')
-          .eq('email', user.email)
-          .maybeSingle();
-
-        if (dbError) console.error("Error de Base de Datos:", dbError);
-
-        if (dbData) {
-          console.log("Datos encontrados en DB:", dbData);
-          setProfile({
-            nombre: dbData.nombre || '',
-            email: dbData.email,
-            rol: dbData.rol || 'ADMIN',
-            estado: dbData.estado || 'activo'
-          });
+        if (session) {
+          await fetchUserData(session.user.email);
         } else {
-          console.warn("No existe fila en 'empleados' para este email. Usando datos de sesión.");
-          // Si no existe en la tabla, cargamos lo mínimo desde Auth para que no salga vacío
-          setProfile({
-            nombre: user.user_metadata?.full_name || 'Admin Nuevo',
-            email: user.email,
-            rol: 'ADMIN',
-            estado: 'activo'
+          // 2. Si no hay sesión inmediata, escuchamos cambios (por si está cargando)
+          const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
+            if (currentSession) {
+              await fetchUserData(currentSession.user.email);
+              subscription.unsubscribe(); // Dejamos de escuchar una vez lo tengamos
+            } else {
+              setLoading(false); // Definitivamente no hay nadie logueado
+            }
           });
         }
       } catch (error) {
-        console.error("Error inesperado:", error);
-      } finally {
+        console.error("Error en el arranque:", error);
         setLoading(false);
       }
     };
 
-    getInitialData();
+    // Función interna para buscar en tu tabla de empleados
+    const fetchUserData = async (email) => {
+      const { data, error } = await supabase
+        .from('empleados')
+        .select('*')
+        .eq('email', email)
+        .maybeSingle();
+
+      if (data) {
+        setProfile({
+          nombre: data.nombre || '',
+          email: data.email,
+          rol: data.rol || 'ADMIN',
+          estado: data.estado || 'activo'
+        });
+      } else {
+        setProfile(prev => ({ ...prev, email: email }));
+      }
+      setLoading(false);
+    };
+
+    loadSessionAndProfile();
   }, []);
 
   const handleSave = async (e) => {
@@ -79,9 +77,9 @@ export default function ProfileSettings() {
         }, { onConflict: 'email' });
 
       if (error) throw error;
-      alert("✅ Perfil guardado con éxito");
+      alert("✅ Perfil guardado");
     } catch (error) {
-      alert("Error al guardar: " + error.message);
+      alert("Error: " + error.message);
     } finally {
       setSaving(false);
     }
@@ -89,7 +87,14 @@ export default function ProfileSettings() {
 
   if (loading) return (
     <div className="p-20 text-center animate-pulse font-black text-slate-300 uppercase tracking-widest">
-      Sincronizando identidad...
+      Conectando con el núcleo...
+    </div>
+  );
+
+  // Si después de cargar no tenemos email, es que la sesión realmente no existe
+  if (!profile.email) return (
+    <div className="p-20 text-center font-black text-red-400 uppercase tracking-widest">
+      Sesión no encontrada. Por favor, vuelve a loguearte.
     </div>
   );
 
@@ -97,15 +102,9 @@ export default function ProfileSettings() {
     <div className="space-y-8 animate-in fade-in duration-700">
       <div className="bg-white p-10 md:p-12 rounded-[3rem] shadow-xl shadow-slate-200/20 border border-slate-100">
         
-        {/* Cabecera idéntica a tu diseño */}
         <div className="mb-12 flex flex-col md:flex-row items-center gap-8 border-b border-slate-100 pb-10">
-          <div className="relative group cursor-pointer shrink-0">
-            <div className="w-28 h-28 bg-slate-100 rounded-full border-4 border-white shadow-xl flex items-center justify-center text-5xl overflow-hidden transition-all group-hover:scale-105">
-              🧑‍💼
-              <div className="absolute inset-0 bg-slate-900/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                <span className="text-white text-2xl">📷</span>
-              </div>
-            </div>
+          <div className="w-28 h-28 bg-slate-100 rounded-full border-4 border-white shadow-xl flex items-center justify-center text-5xl">
+            🧑‍💼
           </div>
           <div>
             <h3 className="text-4xl font-black text-slate-800 tracking-tight">Gestión de Perfil</h3>
@@ -128,7 +127,7 @@ export default function ProfileSettings() {
             </div>
 
             <div className="space-y-3">
-              <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1 block">Estado de Cuenta</label>
+              <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1 block">Estado</label>
               <div className="w-full p-5 text-lg bg-slate-50/50 border-2 border-slate-100 rounded-2xl font-bold text-emerald-500 flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                 {profile.estado.toUpperCase()}
@@ -136,36 +135,18 @@ export default function ProfileSettings() {
             </div>
 
             <div className="space-y-3">
-              <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
-                Email de Acceso <span className="text-sm">🔒</span>
-              </label>
-              <input 
-                type="email" 
-                value={profile.email}
-                readOnly
-                className="w-full p-5 text-lg bg-slate-50/50 border-2 border-slate-100 rounded-2xl font-bold text-slate-400 cursor-not-allowed outline-none"
-              />
+              <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">Email 🔒</label>
+              <input type="text" value={profile.email} readOnly className="w-full p-5 text-lg bg-slate-50/50 border-2 border-slate-100 rounded-2xl font-bold text-slate-400 cursor-not-allowed" />
             </div>
 
             <div className="space-y-3">
-              <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
-                Rol de Sistema <span className="text-sm">🔒</span>
-              </label>
-              <input 
-                type="text" 
-                value={profile.rol}
-                readOnly
-                className="w-full p-5 text-lg bg-slate-50/50 border-2 border-slate-100 rounded-2xl font-black text-blue-400 cursor-not-allowed outline-none tracking-widest"
-              />
+              <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">Rol 🔒</label>
+              <input type="text" value={profile.rol} readOnly className="w-full p-5 text-lg bg-slate-50/50 border-2 border-slate-100 rounded-2xl font-bold text-blue-400 cursor-not-allowed tracking-widest" />
             </div>
           </div>
 
           <div className="pt-6 flex justify-end">
-            <button 
-              type="submit" 
-              disabled={saving}
-              className="px-10 py-5 bg-slate-900 text-white rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-slate-800 transition-all shadow-xl active:scale-95 disabled:opacity-50"
-            >
+            <button type="submit" disabled={saving} className="px-10 py-5 bg-slate-900 text-white rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-slate-800 transition-all shadow-xl active:scale-95 disabled:opacity-50">
               {saving ? 'Guardando...' : 'Guardar Cambios'}
             </button>
           </div>
