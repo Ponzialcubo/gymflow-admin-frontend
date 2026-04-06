@@ -8,49 +8,55 @@ export default function ProfileSettings() {
   const [profile, setProfile] = useState({
     nombre: '',
     email: '',
-    rol: '',
-    estado: 'activo' // Columna que tienes en tu tabla
+    rol: 'ADMIN',
+    estado: 'activo'
   });
 
   useEffect(() => {
     const getInitialData = async () => {
       try {
         setLoading(true);
-
-        // 1. Obtener usuario de la sesión
+        
+        // 1. Obtener el usuario de la sesión (Auth)
         const { data: { user }, error: authError } = await supabase.auth.getUser();
         
         if (authError || !user) {
-          console.error("No hay usuario autenticado");
+          console.error("Error de Auth:", authError);
           setLoading(false);
           return;
         }
 
-        // 2. Buscar en tu tabla 'empleados'
+        console.log("Usuario autenticado:", user.email);
+
+        // 2. Buscar en la tabla 'empleados'
         const { data: dbData, error: dbError } = await supabase
           .from('empleados')
           .select('*')
           .eq('email', user.email)
           .maybeSingle();
 
+        if (dbError) console.error("Error de Base de Datos:", dbError);
+
         if (dbData) {
+          console.log("Datos encontrados en DB:", dbData);
           setProfile({
             nombre: dbData.nombre || '',
-            email: dbData.email || user.email,
+            email: dbData.email,
             rol: dbData.rol || 'ADMIN',
             estado: dbData.estado || 'activo'
           });
         } else {
-          // Si no existe, usamos los datos de la sesión
-          setProfile(prev => ({
-            ...prev,
-            nombre: user.user_metadata?.full_name || 'Nuevo Administrador',
+          console.warn("No existe fila en 'empleados' para este email. Usando datos de sesión.");
+          // Si no existe en la tabla, cargamos lo mínimo desde Auth para que no salga vacío
+          setProfile({
+            nombre: user.user_metadata?.full_name || 'Admin Nuevo',
             email: user.email,
-            rol: 'ADMIN'
-          }));
+            rol: 'ADMIN',
+            estado: 'activo'
+          });
         }
       } catch (error) {
-        console.error("Error crítico:", error);
+        console.error("Error inesperado:", error);
       } finally {
         setLoading(false);
       }
@@ -62,9 +68,7 @@ export default function ProfileSettings() {
   const handleSave = async (e) => {
     e.preventDefault();
     setSaving(true);
-
     try {
-      // UPSERT ajustado a tus columnas: id, nombre, rol, email, estado
       const { error } = await supabase
         .from('empleados')
         .upsert({
@@ -75,7 +79,7 @@ export default function ProfileSettings() {
         }, { onConflict: 'email' });
 
       if (error) throw error;
-      alert("✅ Perfil actualizado correctamente");
+      alert("✅ Perfil guardado con éxito");
     } catch (error) {
       alert("Error al guardar: " + error.message);
     } finally {
@@ -93,6 +97,7 @@ export default function ProfileSettings() {
     <div className="space-y-8 animate-in fade-in duration-700">
       <div className="bg-white p-10 md:p-12 rounded-[3rem] shadow-xl shadow-slate-200/20 border border-slate-100">
         
+        {/* Cabecera idéntica a tu diseño */}
         <div className="mb-12 flex flex-col md:flex-row items-center gap-8 border-b border-slate-100 pb-10">
           <div className="relative group cursor-pointer shrink-0">
             <div className="w-28 h-28 bg-slate-100 rounded-full border-4 border-white shadow-xl flex items-center justify-center text-5xl overflow-hidden transition-all group-hover:scale-105">
@@ -110,8 +115,6 @@ export default function ProfileSettings() {
 
         <form onSubmit={handleSave} className="space-y-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            
-            {/* NOMBRE */}
             <div className="space-y-3">
               <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1 block">Nombre Completo</label>
               <input 
@@ -120,10 +123,10 @@ export default function ProfileSettings() {
                 onChange={(e) => setProfile({...profile, nombre: e.target.value})}
                 className="w-full p-5 text-lg bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none focus:border-blue-500 font-bold transition-all text-slate-800"
                 required
+                placeholder="Escribe tu nombre..."
               />
             </div>
 
-            {/* ESTADO (Nueva columna detectada en tu imagen) */}
             <div className="space-y-3">
               <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1 block">Estado de Cuenta</label>
               <div className="w-full p-5 text-lg bg-slate-50/50 border-2 border-slate-100 rounded-2xl font-bold text-emerald-500 flex items-center gap-2">
@@ -132,7 +135,6 @@ export default function ProfileSettings() {
               </div>
             </div>
 
-            {/* EMAIL */}
             <div className="space-y-3">
               <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
                 Email de Acceso <span className="text-sm">🔒</span>
@@ -141,11 +143,10 @@ export default function ProfileSettings() {
                 type="email" 
                 value={profile.email}
                 readOnly
-                className="w-full p-5 text-lg bg-slate-50/50 border-2 border-slate-100 rounded-2xl outline-none font-bold text-slate-400 cursor-not-allowed"
+                className="w-full p-5 text-lg bg-slate-50/50 border-2 border-slate-100 rounded-2xl font-bold text-slate-400 cursor-not-allowed outline-none"
               />
             </div>
 
-            {/* ROL */}
             <div className="space-y-3">
               <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
                 Rol de Sistema <span className="text-sm">🔒</span>
@@ -154,7 +155,7 @@ export default function ProfileSettings() {
                 type="text" 
                 value={profile.rol}
                 readOnly
-                className="w-full p-5 text-lg bg-slate-50/50 border-2 border-slate-100 rounded-2xl outline-none font-black text-blue-400 cursor-not-allowed tracking-widest"
+                className="w-full p-5 text-lg bg-slate-50/50 border-2 border-slate-100 rounded-2xl font-black text-blue-400 cursor-not-allowed outline-none tracking-widest"
               />
             </div>
           </div>
