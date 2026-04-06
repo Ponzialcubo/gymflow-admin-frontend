@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../../config/supabase'; // Ajusta la ruta si es necesario
+import { supabase } from '../../../config/supabase'; 
 
 export default function NoticesWidget() {
   const [avisos, setAvisos] = useState([]);
