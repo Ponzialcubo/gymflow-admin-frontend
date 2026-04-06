@@ -11,33 +11,29 @@ export default function TrainingSection() {
   } = useTraining();
 
   return (
-    <div className="w-full pb-20 animate-in fade-in duration-700">
-      {/* LA GRAN TARJETA ÚNICA */}
-      <div className="bg-white rounded-[3.5rem] shadow-2xl shadow-slate-200/60 border border-slate-100 overflow-hidden">
+    <div className="w-full max-w-6xl mx-auto px-4 pb-20 animate-in fade-in duration-700">
+      <div className="bg-white rounded-[3rem] shadow-2xl shadow-blue-900/10 border border-slate-100 overflow-hidden">
         
         <TrainingHeader />
 
-        <div className="p-8 md:p-14">
-          <TrainingForm 
-            socios={socios}
-            ejercicios={ejercicios}
-            form={form}
-            setForm={setForm}
-            diasSemana={diasSemana}
-            diasSeleccionados={diasSeleccionados}
-            toggleDia={toggleDia}
-            loading={loading}
-            onSubmit={handleSubmit}
-          />
-        </div>
+        <TrainingForm 
+          socios={socios}
+          ejercicios={ejercicios}
+          form={form}
+          setForm={setForm}
+          diasSemana={diasSemana}
+          diasSeleccionados={diasSeleccionados}
+          toggleDia={toggleDia}
+          loading={loading}
+          onSubmit={handleSubmit}
+        />
 
         <RecentActionsFeed recientes={recientes} />
       </div>
 
-      {/* TOAST DE MENSAJE */}
       {mensaje.texto && (
-        <div className={`fixed bottom-12 left-1/2 -translate-x-1/2 px-10 py-5 rounded-[2rem] shadow-2xl font-black text-sm uppercase tracking-widest z-[200] animate-in slide-in-from-bottom-6 duration-500 flex items-center gap-3 ${
-          mensaje.tipo === 'success' ? 'bg-slate-900 text-green-400 border-2 border-green-400/20' : 'bg-red-600 text-white'
+        <div className={`fixed bottom-10 left-1/2 -translate-x-1/2 px-8 py-4 rounded-2xl shadow-2xl font-black text-[10px] uppercase tracking-widest z-50 animate-in slide-in-from-bottom-4 ${
+          mensaje.tipo === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
         }`}>
           {mensaje.texto}
         </div>
