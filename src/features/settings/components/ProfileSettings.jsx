@@ -1,90 +1,94 @@
 import React, { useState } from 'react';
 
 export default function ProfileSettings({ user }) {
-  const [formData, setFormData] = useState({
-    nombre: user?.nombre || 'Administrador Principal',
-    email: user?.email || 'admin@gymflow.com',
+  // Simulamos los datos del usuario
+  const [profile, setProfile] = useState({
+    nombre: 'Administrador Principal',
     telefono: '+34 600 000 000',
-    rol: 'Super Admin'
+    email: 'admin@gymflow.com',
+    rol: 'SUPER ADMIN'
   });
 
-  const [isSaving, setIsSaving] = useState(false);
-
-  const handleSubmit = (e) => {
+  const handleSave = (e) => {
     e.preventDefault();
-    setIsSaving(true);
-    // Simular guardado
-    setTimeout(() => {
-      setIsSaving(false);
-      alert("Perfil actualizado correctamente");
-    }, 1000);
+    alert("Perfil actualizado correctamente.");
   };
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       
-      {/* TARJETA 1: IDENTIDAD */}
-      <div className="bg-white p-10 rounded-[3rem] shadow-xl shadow-slate-200/20 border border-slate-100">
-        <div className="flex items-start gap-8 mb-10 border-b border-slate-100 pb-8">
-          {/* Avatar */}
-          <div className="relative">
-            <div className="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center text-4xl shadow-inner border-4 border-white">
+      <div className="bg-white p-10 md:p-12 rounded-[3rem] shadow-xl shadow-slate-200/20 border border-slate-100">
+        
+        {/* CABECERA Y AVATAR */}
+        <div className="mb-12 flex flex-col md:flex-row items-center gap-8 border-b border-slate-100 pb-10">
+          
+          {/* Avatar Premium con efecto Hover para cambiar foto */}
+          <div className="relative group cursor-pointer shrink-0">
+            <div className="w-28 h-28 bg-slate-100 rounded-full border-4 border-white shadow-xl flex items-center justify-center text-5xl overflow-hidden transition-all group-hover:scale-105">
               🧑‍💼
+              {/* Overlay oscuro que aparece al pasar el ratón */}
+              <div className="absolute inset-0 bg-slate-900/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <span className="text-white text-2xl">📷</span>
+              </div>
             </div>
-            <button className="absolute bottom-0 right-0 w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs border-2 border-white hover:bg-blue-700 transition-colors cursor-pointer" title="Cambiar foto">
-              📷
-            </button>
           </div>
+
           <div>
-            <h3 className="text-3xl font-black text-slate-800 tracking-tight">Gestión de Perfil</h3>
-            <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mt-1">Configura tu identidad de administrador</p>
+            <h3 className="text-4xl font-black text-slate-800 tracking-tight">Gestión de Perfil</h3>
+            <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mt-2">Configura tu identidad de administrador</p>
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* FORMULARIO */}
+        <form onSubmit={handleSave} className="space-y-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             
-            {/* Campo Nombre */}
-            <div>
-              <label className="text-[10px] font-black text-blue-600 uppercase tracking-widest ml-1 mb-2 block">Nombre Completo</label>
+            {/* CAMPOS EDITABLES */}
+            <div className="space-y-3">
+              <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1 block">Nombre Completo</label>
               <input 
                 type="text" 
-                value={formData.nombre}
-                onChange={(e) => setFormData({...formData, nombre: e.target.value})}
-                className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-blue-500 outline-none text-base font-bold transition-all text-slate-700"
+                value={profile.nombre}
+                onChange={(e) => setProfile({...profile, nombre: e.target.value})}
+                className="w-full p-5 text-lg bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none focus:border-blue-500 font-bold transition-all text-slate-800"
+                required
               />
             </div>
 
-            {/* Campo Email */}
-            <div>
-              <label className="text-[10px] font-black text-blue-600 uppercase tracking-widest ml-1 mb-2 block">Email de Acceso</label>
+            <div className="space-y-3">
+              <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1 block">Teléfono de Contacto</label>
+              <input 
+                type="text" 
+                value={profile.telefono}
+                onChange={(e) => setProfile({...profile, telefono: e.target.value})}
+                className="w-full p-5 text-lg bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none focus:border-blue-500 font-bold transition-all text-slate-800 tabular-nums"
+                required
+              />
+            </div>
+
+            {/* CAMPOS BLOQUEADOS (Read-only) */}
+            <div className="space-y-3">
+              <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
+                Email de Acceso <span className="text-sm">🔒</span>
+              </label>
               <input 
                 type="email" 
-                value={formData.email}
-                disabled // El email de login no suele cambiarse aquí fácilmente
-                className="w-full p-4 bg-slate-100/50 border-2 border-slate-100 rounded-2xl outline-none text-base font-bold text-slate-400 cursor-not-allowed"
+                value={profile.email}
+                readOnly
+                className="w-full p-5 text-lg bg-slate-50/50 border-2 border-slate-100 rounded-2xl outline-none font-bold text-slate-400 cursor-not-allowed"
+                title="Para cambiar tu email contacta con soporte"
               />
             </div>
 
-            {/* Campo Teléfono */}
-            <div>
-              <label className="text-[10px] font-black text-blue-600 uppercase tracking-widest ml-1 mb-2 block">Teléfono de Contacto</label>
-              <input 
-                type="tel" 
-                value={formData.telefono}
-                onChange={(e) => setFormData({...formData, telefono: e.target.value})}
-                className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-blue-500 outline-none text-base font-bold transition-all text-slate-700"
-              />
-            </div>
-
-            {/* Campo Rol (Solo lectura) */}
-            <div>
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-2 block">Rol de Sistema</label>
+            <div className="space-y-3">
+              <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
+                Rol de Sistema <span className="text-sm">🔒</span>
+              </label>
               <input 
                 type="text" 
-                value={formData.rol}
-                disabled
-                className="w-full p-4 bg-slate-100/50 border-2 border-slate-100 rounded-2xl outline-none text-base font-bold text-slate-400 cursor-not-allowed uppercase"
+                value={profile.rol}
+                readOnly
+                className="w-full p-5 text-lg bg-slate-50/50 border-2 border-slate-100 rounded-2xl outline-none font-black text-blue-400 cursor-not-allowed tracking-widest"
               />
             </div>
 
@@ -92,15 +96,15 @@ export default function ProfileSettings({ user }) {
 
           <div className="pt-6 flex justify-end">
             <button 
-              type="submit"
-              disabled={isSaving}
-              className="px-8 py-4 bg-slate-900 text-white rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-slate-800 transition-all shadow-lg active:scale-95 disabled:opacity-50"
+              type="submit" 
+              className="px-10 py-5 bg-slate-900 text-white rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-slate-800 transition-all shadow-xl active:scale-95"
             >
-              {isSaving ? 'Guardando...' : 'Guardar Cambios'}
+              Guardar Cambios
             </button>
           </div>
         </form>
       </div>
+
     </div>
   );
 }
