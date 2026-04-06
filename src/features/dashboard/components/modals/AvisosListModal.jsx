@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-// Asegúrate de que la ruta a Supabase es correcta según tu estructura
+// Asegúrate de que la ruta a Supabase sigue siendo correcta (con 4 ../ si lo movimos)
 import { supabase } from '../../../../config/supabase';
 
 export default function AvisosListModal({ isOpen, onClose }) {
@@ -68,7 +68,8 @@ export default function AvisosListModal({ isOpen, onClose }) {
           ✕
         </button>
 
-        <h2 className="text-4xl font-black text-slate-800 tracking-tighter mb-10">Tablón de Avisos</h2>
+        {/* CAMBIO AQUÍ: text-4xl a text-5xl */}
+        <h2 className="text-5xl font-black text-slate-800 tracking-tighter mb-10">Tablón de Avisos</h2>
 
         {/* Zona de contenido con scroll vertical */}
         <div className="flex-1 space-y-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
@@ -99,7 +100,8 @@ export default function AvisosListModal({ isOpen, onClose }) {
                   </button>
                 </div>
                 
-                <h3 className="text-xl font-black text-slate-800 tracking-tight mb-2">
+                {/* CAMBIO AQUÍ: text-xl a text-2xl */}
+                <h3 className="text-2xl font-black text-slate-800 tracking-tight mb-2">
                   {aviso.titulo}
                 </h3>
                 <p className="text-sm font-bold text-slate-500 leading-relaxed">
