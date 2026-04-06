@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import { supabase } from '../../../config/supabase'; 
 
 export default function AddClientModal({ isOpen, onClose, onClientAdded }) {
   const [formData, setFormData] = useState({
@@ -17,12 +17,25 @@ export default function AddClientModal({ isOpen, onClose, onClientAdded }) {
     setIsSubmitting(true);
 
     try {
-      const response = await axios.post('http://localhost:3000/api/usuarios', formData);
+      // 2. ¡Hola Supabase! Insertamos directamente en la base de datos
+      const { error } = await supabase
+        .from('usuarios')
+        .insert([{
+          nombre: formData.nombre,
+          email: formData.email,
+          password: formData.password,
+          rol: 'socio',
+          activo: true
+        }]);
+
+      if (error) throw error;
+
+      // Si todo va bien, limpiamos y cerramos
       setFormData({ nombre: '', email: '', password: 'GymFlow2024!' });
       if (onClientAdded) onClientAdded();
       onClose();
     } catch (error) {
-      console.error("Error al crear socio:", error);
+      console.error("Error al crear socio en Supabase:", error);
       alert("Hubo un error al crear el socio. Revisa la consola.");
     } finally {
       setIsSubmitting(false);

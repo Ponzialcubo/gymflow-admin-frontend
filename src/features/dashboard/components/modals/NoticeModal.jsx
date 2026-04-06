@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import { supabase } from '../../../../config/supabase'; 
 
 export default function NoticeModal({ isOpen, onClose, onNoticeAdded }) {
   const [formData, setFormData] = useState({
@@ -17,13 +17,24 @@ export default function NoticeModal({ isOpen, onClose, onNoticeAdded }) {
     setIsSubmitting(true);
 
     try {
-      await axios.post('http://localhost:3000/api/avisos', formData);
+      // Inserción directa en la tabla 'avisos' de Supabase
+      const { error } = await supabase
+        .from('avisos')
+        .insert([{
+          titulo: formData.titulo,
+          mensaje: formData.mensaje,
+          tipo: formData.tipo
+        }]);
+
+      if (error) throw error;
+
+      // Si todo sale bien, reseteamos el formulario y cerramos
       setFormData({ titulo: '', mensaje: '', tipo: 'info' });
       if (onNoticeAdded) onNoticeAdded();
       onClose();
     } catch (error) {
-      console.error("Error al crear aviso:", error);
-      alert("Hubo un error al publicar el aviso.");
+      console.error("Error al crear aviso en Supabase:", error);
+      alert("Hubo un error al publicar el aviso. Revisa la consola.");
     } finally {
       setIsSubmitting(false);
     }
