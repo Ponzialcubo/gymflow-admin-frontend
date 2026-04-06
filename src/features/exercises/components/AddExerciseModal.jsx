@@ -7,26 +7,28 @@ export default function AddExerciseModal({ isOpen, onClose, onSubmit, formData, 
 
   return (
     <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-md flex items-center justify-center z-[100] p-4">
-      <div className="bg-white rounded-[3rem] p-10 w-full max-w-lg shadow-2xl animate-in zoom-in duration-300">
-        <h2 className="text-3xl font-black text-slate-800 mb-2 tracking-tighter">Registrar Movimiento</h2>
-        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-8">Expansión del catálogo técnico</p>
+      {/* Max-w-2xl para que el modal sea un poco más ancho y quepa la letra grande */}
+      <div className="bg-white rounded-[3rem] p-10 w-full max-w-2xl shadow-2xl animate-in zoom-in duration-300">
+        <h2 className="text-3xl xl:text-4xl font-black text-slate-800 mb-2 tracking-tighter">Registrar Movimiento</h2>
+        <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-8">Expansión del catálogo técnico</p>
         
-        <form onSubmit={onSubmit} className="space-y-5">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <div className="space-y-2">
-              <label className="text-[10px] font-black text-blue-600 uppercase tracking-widest ml-1">Nombre</label>
+        <form onSubmit={onSubmit} className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="text-xs font-black text-blue-600 uppercase tracking-widest block mb-2">Nombre del Ejercicio</label>
               <input 
                 required 
                 type="text" 
-                className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl text-sm font-bold" 
+                placeholder="Ej. Sentadilla Búlgara"
+                className="w-full bg-slate-50 p-4 rounded-2xl font-black text-xl text-slate-800 outline-none focus:ring-2 ring-blue-100" 
                 value={formData.nombre} 
                 onChange={e => setFormData({...formData, nombre: e.target.value})} 
               />
             </div>
-            <div className="space-y-2">
-              <label className="text-[10px] font-black text-blue-600 uppercase tracking-widest ml-1">Grupo Muscular</label>
+            <div>
+              <label className="text-xs font-black text-blue-600 uppercase tracking-widest block mb-2">Grupo Muscular</label>
               <select 
-                className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl text-sm font-bold" 
+                className="w-full bg-slate-50 p-4 rounded-2xl font-black text-xl text-slate-800 outline-none focus:ring-2 ring-blue-100 cursor-pointer" 
                 value={formData.grupo_muscular} 
                 onChange={e => setFormData({...formData, grupo_muscular: e.target.value})}
               >
@@ -35,21 +37,22 @@ export default function AddExerciseModal({ isOpen, onClose, onSubmit, formData, 
             </div>
           </div>
           
-          <div className="space-y-2">
-            <label className="text-[10px] font-black text-blue-600 uppercase tracking-widest ml-1">URL Imagen (Opcional)</label>
+          <div>
+            <label className="text-xs font-black text-blue-600 uppercase tracking-widest block mb-2">URL Imagen (Opcional)</label>
             <input 
               type="text" 
               placeholder="https://..." 
-              className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl text-sm font-bold" 
+              className="w-full bg-slate-50 p-4 rounded-2xl font-black text-lg text-slate-800 outline-none focus:ring-2 ring-blue-100" 
               value={formData.imagen_url} 
               onChange={e => setFormData({...formData, imagen_url: e.target.value})} 
             />
           </div>
 
-          <div className="space-y-2">
-            <label className="text-[10px] font-black text-blue-600 uppercase tracking-widest ml-1">Descripción Técnica</label>
+          <div>
+            <label className="text-xs font-black text-blue-600 uppercase tracking-widest block mb-2">Descripción Técnica</label>
             <textarea 
-              className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl text-xs font-medium h-24 resize-none" 
+              placeholder="Detalles sobre la ejecución..."
+              className="w-full bg-slate-50 p-4 rounded-2xl font-medium text-sm text-slate-800 outline-none focus:ring-2 ring-blue-100 h-28 resize-none" 
               value={formData.descripcion} 
               onChange={e => setFormData({...formData, descripcion: e.target.value})} 
             />
@@ -59,15 +62,15 @@ export default function AddExerciseModal({ isOpen, onClose, onSubmit, formData, 
             <button 
               type="button" 
               onClick={onClose} 
-              className="flex-1 py-4 text-slate-400 font-black text-[10px] uppercase tracking-widest"
+              className="flex-1 py-4 text-slate-400 font-black text-xs uppercase tracking-widest hover:bg-slate-50 rounded-2xl transition-all"
             >
               Cancelar
             </button>
             <button 
               type="submit" 
-              className="flex-1 py-4 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl hover:bg-blue-600 transition-colors"
+              className="flex-1 py-4 bg-slate-900 text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl hover:bg-blue-600 transition-colors"
             >
-              Guardar en Base de Datos
+              Guardar Ejercicio
             </button>
           </div>
         </form>
