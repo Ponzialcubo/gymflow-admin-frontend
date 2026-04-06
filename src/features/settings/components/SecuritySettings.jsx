@@ -16,70 +16,116 @@ export default function SecuritySettings() {
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       
-      <div className="bg-white p-10 rounded-[3rem] shadow-xl shadow-slate-200/20 border border-slate-100">
-        <div className="mb-8 border-b border-slate-100 pb-6">
-          <h3 className="text-3xl font-black text-slate-800 tracking-tight">Seguridad de la Cuenta</h3>
-          <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mt-1">Protege tu acceso de administrador</p>
+      {/* TARJETA 1: CAMBIO DE CONTRASEÑA */}
+      <div className="bg-white p-10 md:p-12 rounded-[3rem] shadow-xl shadow-slate-200/20 border border-slate-100">
+        <div className="mb-10 border-b border-slate-100 pb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h3 className="text-3xl font-black text-slate-800 tracking-tight">Credenciales de Acceso</h3>
+            <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mt-1">Actualiza tu contraseña de administrador</p>
+          </div>
+          <div className="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center text-2xl shadow-sm border border-slate-100">
+            🔐
+          </div>
         </div>
 
-        <form onSubmit={handleUpdatePassword} className="space-y-6 max-w-xl">
-          <div className="space-y-2">
-            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 block">Contraseña Actual</label>
-            <input 
-              type="password" 
-              className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none focus:border-slate-900 font-bold transition-all"
-              placeholder="••••••••"
-              value={pass.current}
-              onChange={(e) => setPass({...pass, current: e.target.value})}
-              required
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 block">Nueva Contraseña</label>
+        <form onSubmit={handleUpdatePassword} className="space-y-8">
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+            
+            <div className="space-y-3 xl:col-span-1">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 block">Contraseña Actual</label>
               <input 
                 type="password" 
-                className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none focus:border-slate-900 font-bold transition-all"
+                className="w-full p-5 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none focus:border-slate-800 font-bold transition-all text-slate-700"
                 placeholder="••••••••"
-                value={pass.new}
-                onChange={(e) => setPass({...pass, new: e.target.value})}
+                value={pass.current}
+                onChange={(e) => setPass({...pass, current: e.target.value})}
                 required
               />
             </div>
-            <div className="space-y-2">
-              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 block">Confirmar Contraseña</label>
-              <input 
-                type="password" 
-                className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none focus:border-slate-900 font-bold transition-all"
-                placeholder="••••••••"
-                value={pass.confirm}
-                onChange={(e) => setPass({...pass, confirm: e.target.value})}
-                required
-              />
+
+            <div className="xl:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="space-y-3">
+                <label className="text-[10px] font-black text-blue-600 uppercase tracking-widest ml-1 block">Nueva Contraseña</label>
+                <input 
+                  type="password" 
+                  className="w-full p-5 bg-blue-50/30 border-2 border-blue-100 rounded-2xl outline-none focus:border-blue-500 font-bold transition-all text-blue-800"
+                  placeholder="••••••••"
+                  value={pass.new}
+                  onChange={(e) => setPass({...pass, new: e.target.value})}
+                  required
+                />
+              </div>
+              <div className="space-y-3">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 block">Confirmar Contraseña</label>
+                <input 
+                  type="password" 
+                  className="w-full p-5 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none focus:border-slate-800 font-bold transition-all text-slate-700"
+                  placeholder="••••••••"
+                  value={pass.confirm}
+                  onChange={(e) => setPass({...pass, confirm: e.target.value})}
+                  required
+                />
+              </div>
             </div>
           </div>
 
-          <div className="bg-amber-50 border border-amber-100 p-6 rounded-2xl flex gap-4 items-start mt-8">
-            <span className="text-2xl">⚠️</span>
-            <div>
-              <p className="text-xs font-black text-amber-800 uppercase tracking-widest mb-1">Requisitos de seguridad</p>
-              <p className="text-[11px] text-amber-700/80 font-bold leading-relaxed">
-                Usa al menos 8 caracteres, combinando mayúsculas, minúsculas y números. Te recomendamos no usar la misma contraseña que en otros sitios web.
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6 pt-6 border-t border-slate-100">
+            {/* Aviso de seguridad rediseñado */}
+            <div className="flex items-center gap-4 text-slate-500">
+              <div className="w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center text-amber-500 shrink-0">
+                ⚠️
+              </div>
+              <p className="text-xs font-bold leading-relaxed max-w-md">
+                Usa al menos <span className="font-black text-slate-700">8 caracteres</span>, combinando mayúsculas, minúsculas y números.
               </p>
             </div>
-          </div>
-
-          <div className="pt-4 border-t border-slate-100 flex items-center justify-between mt-8">
-            <button type="button" className="text-xs font-black text-slate-400 hover:text-red-500 uppercase tracking-widest transition-colors">
-              Cerrar resto de sesiones
-            </button>
-            <button type="submit" className="px-8 py-4 bg-slate-900 text-white rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-slate-800 transition-all shadow-lg active:scale-95">
+            
+            <button type="submit" className="w-full md:w-auto px-10 py-5 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-blue-600 transition-all shadow-xl active:scale-95 shrink-0">
               Actualizar Clave
             </button>
           </div>
         </form>
       </div>
+
+      {/* TARJETA 2: CONTROL DE SESIONES */}
+      <div className="bg-white p-10 md:p-12 rounded-[3rem] shadow-xl shadow-slate-200/20 border border-slate-100">
+        <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-6">
+          <div>
+            <h3 className="text-2xl font-black text-slate-800 tracking-tight">Dispositivos Vinculados</h3>
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Controla desde dónde accedes</p>
+          </div>
+          <button 
+            type="button" 
+            className="px-6 py-3 bg-red-50 text-red-600 border border-red-100 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-600 hover:text-white transition-all shadow-sm"
+          >
+            Cerrar otras sesiones
+          </button>
+        </div>
+
+        {/* Lista de sesiones simulada para dar aspecto Pro */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-6 p-6 bg-slate-50 rounded-[2rem] border border-slate-200/60">
+            <div className="text-4xl">💻</div>
+            <div className="flex-1">
+              <p className="text-sm font-black text-slate-800">MacBook Pro - Google Chrome</p>
+              <p className="text-[11px] font-bold text-slate-400 mt-0.5">Madrid, España • IP: 192.168.1.34</p>
+            </div>
+            <div className="bg-emerald-50 text-emerald-600 text-[10px] font-black px-4 py-2 rounded-full uppercase tracking-widest border border-emerald-100">
+              Sesión Actual
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-6 p-6 bg-transparent rounded-[2rem] border border-slate-100">
+            <div className="text-4xl opacity-50">📱</div>
+            <div className="flex-1 opacity-70">
+              <p className="text-sm font-black text-slate-800">iPhone 14 - Safari Mobile</p>
+              <p className="text-[11px] font-bold text-slate-400 mt-0.5">Getafe, España • Hace 2 horas</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
     </div>
   );
 }
