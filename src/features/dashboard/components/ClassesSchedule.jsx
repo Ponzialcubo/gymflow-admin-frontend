@@ -41,7 +41,7 @@ export default function ClassesSchedule({ clases = [], onOpenFullSchedule }) {
       {/* mt-auto asegura que el botón se quede siempre abajo del todo */}
       <button 
         onClick={onOpenFullSchedule}
-        className="mt-auto w-full py-5 bg-slate-900 hover:bg-blue-600 text-white rounded-2xl text-[9px] font-black uppercase tracking-[0.2em] transition-all shadow-xl shadow-slate-200"
+        className="mt-auto w-full py-5 bg-slate-900 hover:bg-blue-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all shadow-xl shadow-slate-200"
       >
         Ver Horario Completo
       </button>
