@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { supabase } from './config/supabase'; // <-- AÑADIMOS ESTO
 import LoginPage from './pages/LoginPage.jsx';
 import DashboardPage from './pages/DashboardPage';
 
@@ -34,7 +35,11 @@ export default function App() {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => { // <-- AHORA ES ASYNC
+    // 1. Cerramos la sesión real en el servidor de Supabase
+    await supabase.auth.signOut();
+    
+    // 2. Limpiamos la pantalla y el navegador
     setUser(null);
     localStorage.removeItem('gymUser');
   };
@@ -47,24 +52,14 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* RUTA RAÍZ: 
-          Solo redirige al dashboard si es ADMIN. 
-          Si no, siempre muestra el Login.
-        */}
         <Route 
           path="/" 
           element={isAdmin ? <Navigate to="/dashboard" replace /> : <LoginPage onLogin={handleLogin} />} 
         />
-
-        {/* RUTA DASHBOARD: 
-          Si no es admin, lo manda de vuelta a la raíz (Login).
-        */}
         <Route 
           path="/dashboard/*" 
           element={isAdmin ? <DashboardPage user={user} logout={handleLogout} /> : <Navigate to="/" replace />} 
         />
-
-        {/* Comodín: Cualquier otra ruta vuelve al inicio */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
