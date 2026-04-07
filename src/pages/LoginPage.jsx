@@ -14,25 +14,42 @@ export default function LoginPage({ onLogin }) {
     setLoading(true);
 
     try {
-      // Petición directa a Supabase buscando coincidencia exacta
-      const { data, error: supabaseError } = await supabase
-        .from('usuarios')
-        .select('id, nombre, email, rol, activo')
-        .eq('email', email)
-        .eq('password', password) // Aviso de tutor: Para el TFG final usaremos Supabase Auth para encriptar esto ;)
-        .eq('activo', true)
-        .single(); // Exigimos que nos devuelva un único usuario
+      // 1. EL CAMBIO CLAVE: Autenticación real de Supabase
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: password,
+      });
 
-      // Si hay un error (ej. no encuentra a nadie) o no hay datos, lanzamos el fallo
-      if (supabaseError || !data) {
-        throw new Error('Credenciales inválidas o usuario inactivo');
+      if (authError) throw authError;
+
+      // 2. Una vez logueados, traemos los datos de nuestra tabla 'public.usuarios'
+      // Usamos el ID que nos ha dado el sistema de Auth
+      const { data: profile, error: profileError } = await supabase
+        .from('usuarios')
+        .select('id, nombre, email, rol')
+        .eq('id', authData.user.id)
+        .single();
+
+      if (profileError || !profile) {
+        throw new Error('Perfil no encontrado en la base de datos');
       }
 
-      // Si pasamos el filtro, el login es correcto y enviamos los datos a App.jsx
-      onLogin(data); 
+      // 3. Verificamos si es administrador (para el panel de React)
+      if (profile.rol !== 'admin') {
+        // Si no es admin, cerramos sesión inmediatamente por seguridad
+        await supabase.auth.signOut();
+        throw new Error('Acceso restringido: Se requiere rol de administrador');
+      }
+
+      // Si todo es correcto, enviamos los datos a App.jsx
+      onLogin(profile); 
       
     } catch (err) {
-      setError(err.message || 'Error al conectar con el servidor');
+      // Traducimos errores comunes para el usuario
+      const message = err.message === 'Invalid login credentials' 
+        ? 'Email o contraseña incorrectos' 
+        : err.message;
+      setError(message);
     } finally {
       setLoading(false);
     }

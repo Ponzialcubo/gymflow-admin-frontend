@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../../config/supabase';
 
 export default function CapacityCounter() {
-  const [maxCapacity, setMaxCapacity] = useState(100); // 100 por defecto mientras carga
+  const [maxCapacity, setMaxCapacity] = useState(100); 
   const [count, setCount] = useState(27);
 
   // 1. Descargamos el Aforo Máximo real desde Supabase

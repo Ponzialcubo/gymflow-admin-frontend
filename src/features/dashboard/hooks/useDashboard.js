@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '../../../config/supabase'; // Asegúrate de la ruta correcta
+import { supabase } from '../../../config/supabase'; 
 
 export const useDashboard = () => {
   // Inicializamos stats con la estructura que espera tu StatsGrid
