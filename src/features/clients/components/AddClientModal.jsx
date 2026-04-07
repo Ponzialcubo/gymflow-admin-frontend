@@ -17,26 +17,34 @@ export default function AddClientModal({ isOpen, onClose, onClientAdded }) {
     setIsSubmitting(true);
 
     try {
-      // 2. ¡Hola Supabase! Insertamos directamente en la base de datos
-      const { error } = await supabase
-        .from('usuarios')
-        .insert([{
-          nombre: formData.nombre,
-          email: formData.email,
-          password: formData.password,
-          rol: 'socio',
-          activo: true
-        }]);
+      // 1. Hablamos con el sistema de Autenticación, NO con la tabla.
+      const { data, error } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        options: {
+          data: {
+            // Pasamos estos datos extra para que nuestro TRIGGER de SQL 
+            // los lea y cree el perfil en la tabla automáticamente.
+            full_name: formData.nombre,
+            rol: 'socio'
+          }
+        }
+      });
 
       if (error) throw error;
 
-      // Si todo va bien, limpiamos y cerramos
+      // 2. Si todo va bien, el Trigger ya ha hecho su trabajo en la base de datos
       setFormData({ nombre: '', email: '', password: 'GymFlow2024!' });
+      
+      // Llamamos a la función para actualizar la lista en pantalla
       if (onClientAdded) onClientAdded();
       onClose();
+      
+      alert("✅ Socio creado correctamente. Ya puede iniciar sesión desde la App móvil.");
+
     } catch (error) {
-      console.error("Error al crear socio en Supabase:", error);
-      alert("Hubo un error al crear el socio. Revisa la consola.");
+      console.error("Error al crear socio en Supabase Auth:", error);
+      alert("Hubo un error al crear el socio: " + error.message);
     } finally {
       setIsSubmitting(false);
     }
