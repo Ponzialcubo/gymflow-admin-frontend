@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { supabase } from '../../../config/supabase'; 
+// 1. IMPORTANTE: Importamos createClient para hacer nuestro clon temporal
+import { createClient } from '@supabase/supabase-js'; 
 
 export default function AddClientModal({ isOpen, onClose, onClientAdded }) {
   const [formData, setFormData] = useState({
@@ -17,14 +19,26 @@ export default function AddClientModal({ isOpen, onClose, onClientAdded }) {
     setIsSubmitting(true);
 
     try {
-      // 1. Hablamos con el sistema de Autenticación, NO con la tabla.
-      const { data, error } = await supabase.auth.signUp({
+      // 2. EL TRUCO SENIOR: Creamos un "Supabase temporal" ciego
+      // Esto crea el usuario pero le prohibimos explícitamente tocar la sesión actual
+      const tempSupabase = createClient(
+        import.meta.env.VITE_SUPABASE_URL, 
+        import.meta.env.VITE_SUPABASE_ANON_KEY, 
+        {
+          auth: { 
+            persistSession: false, // ¡Clave! No guarda la sesión en tu navegador
+            autoRefreshToken: false,
+            detectSessionInUrl: false
+          }
+        }
+      );
+
+      // 3. Usamos el cliente temporal en lugar del principal
+      const { data, error } = await tempSupabase.auth.signUp({
         email: formData.email,
         password: formData.password,
         options: {
           data: {
-            // Pasamos estos datos extra para que nuestro TRIGGER de SQL 
-            // los lea y cree el perfil en la tabla automáticamente.
             full_name: formData.nombre,
             rol: 'socio'
           }
@@ -33,14 +47,13 @@ export default function AddClientModal({ isOpen, onClose, onClientAdded }) {
 
       if (error) throw error;
 
-      // 2. Si todo va bien, el Trigger ya ha hecho su trabajo en la base de datos
+      // 4. Limpiamos y cerramos
       setFormData({ nombre: '', email: '', password: 'GymFlow2024!' });
       
-      // Llamamos a la función para actualizar la lista en pantalla
       if (onClientAdded) onClientAdded();
       onClose();
       
-      alert("✅ Socio creado correctamente. Ya puede iniciar sesión desde la App móvil.");
+      alert("✅ Socio creado correctamente. Tu sesión de Admin sigue activa.");
 
     } catch (error) {
       console.error("Error al crear socio en Supabase Auth:", error);
