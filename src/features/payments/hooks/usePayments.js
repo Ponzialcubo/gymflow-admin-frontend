@@ -7,11 +7,13 @@ export const usePayments = () => {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   
-  // Inicializamos con el plan 'Basic' como defecto para que cuadre con el modal
+  // Guardamos las tarifas en memoria por si cambian de plan
+  const [tarifas, setTarifas] = useState({ Basic: 19.99, Estándar: 29.99, Pro: 39.99 });
+
   const [newSub, setNewSub] = useState({
     id_usuario: '',
     tipo_plan: 'Basic',
-    precio: 19.99,
+    precio: 19.99, // Se sobrescribirá enseguida con el de la BBDD
     estado: 'activo'
   });
 
@@ -19,16 +21,23 @@ export const usePayments = () => {
     try {
       setLoading(true);
       
-      const [resSubs, resUsers] = await Promise.all([
+      // Hacemos 3 consultas a la vez para máxima velocidad
+      const [resSubs, resUsers, resSettings] = await Promise.all([
         supabase
           .from('suscripciones')
           .select('id, tipo_plan, estado, fecha_inicio, fecha_fin, precio, usuarios(nombre, email)')
           .order('fecha_inicio', { ascending: false }),
+        
         supabase
           .from('usuarios')
           .select('id, nombre, email')
-          .eq('rol', 'socio')
-          .eq('activo', true)
+          .eq('rol', 'socio'), // ⚠️ ARREGLADO: Quitamos eq('activo', true) para que salgan todos
+          
+        supabase
+          .from('gym_settings')
+          .select('precio_basic, precio_estandar, precio_pro')
+          .eq('id', 1)
+          .single()
       ]);
 
       if (resSubs.error) throw resSubs.error;
@@ -36,6 +45,20 @@ export const usePayments = () => {
 
       setSubscriptions(resSubs.data);
       setUsers(resUsers.data);
+
+      // Si la BBDD nos devuelve las tarifas, las aplicamos
+      if (resSettings.data) {
+        const bdTarifas = {
+          Basic: resSettings.data.precio_basic,
+          Estándar: resSettings.data.precio_estandar,
+          Pro: resSettings.data.precio_pro
+        };
+        setTarifas(bdTarifas);
+        
+        // Actualizamos el precio del formulario para que sea el oficial
+        setNewSub(prev => ({ ...prev, precio: bdTarifas.Basic }));
+      }
+
     } catch (err) {
       console.error("Error cargando datos de Supabase:", err.message);
     } finally {
@@ -50,19 +73,18 @@ export const usePayments = () => {
   const handleAddSubscription = async (e) => {
     e.preventDefault();
     try {
-      // 1. REGLA DE NEGOCIO: Desactivar cualquier suscripción previa del usuario
+      // 1. REGLA DE NEGOCIO: Desactivar previa
       const { error: updateError } = await supabase
         .from('suscripciones')
         .update({ estado: 'cancelado' })
         .eq('id_usuario', newSub.id_usuario)
-        .eq('estado', 'activo'); // Solo cancelamos las que estuvieran activas
+        .eq('estado', 'activo'); 
 
       if (updateError) {
-         console.warn("No se pudo actualizar el estado previo o no existía:", updateError);
-         // No lanzamos error aquí para permitir que el flujo continúe si es un socio nuevo
+         console.warn("Aviso (No bloqueante):", updateError);
       }
 
-      // 2. Calculamos la fecha de expiración (1 mes por defecto)
+      // 2. Calculamos expiración
       let fechaExpiracion = new Date();
       fechaExpiracion.setMonth(fechaExpiracion.getMonth() + 1);
       
@@ -73,15 +95,15 @@ export const usePayments = () => {
             id_usuario: newSub.id_usuario, 
             tipo_plan: newSub.tipo_plan, 
             fecha_fin: fechaExpiracion.toISOString(), 
-            precio: parseFloat(newSub.precio), // Forzamos que sea un número
+            precio: parseFloat(newSub.precio), 
             estado: 'activo' 
         }]);
 
       if (insertError) throw insertError;
 
-      // 4. Limpieza y recarga
+      // 4. Limpiamos. Ojo: Usamos la tarifa oficial de la BBDD, no un número fijo.
       setIsModalOpen(false);
-      setNewSub({ id_usuario: '', tipo_plan: 'Basic', precio: 19.99, estado: 'activo' });
+      setNewSub({ id_usuario: '', tipo_plan: 'Basic', precio: tarifas.Basic, estado: 'activo' });
       fetchData(); 
       
     } catch (err) {
