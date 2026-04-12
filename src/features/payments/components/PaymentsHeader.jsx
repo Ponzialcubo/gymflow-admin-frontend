@@ -1,57 +1,75 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
-export default function PaymentsHeader({ onOpenModal, onExportPDF }) {
+export default function PaymentsHeader({ onOpenModal, onExportPDF, currentOccupancy = 27, maxCapacity = 100 }) {
+  // 1. Lógica de conexión simplificada
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+
+  useEffect(() => {
+    const handleStatus = () => setIsOnline(navigator.onLine);
+    window.addEventListener('online', handleStatus);
+    window.addEventListener('offline', handleStatus);
+    return () => {
+      window.removeEventListener('online', handleStatus);
+      window.removeEventListener('offline', handleStatus);
+    };
+  }, []);
+
+  const percentage = (currentOccupancy / maxCapacity) * 100;
+
   return (
-    <div className="flex flex-col lg:flex-row items-center justify-between gap-8 mb-12 bg-slate-50/50 p-6 rounded-[2.5rem] border border-slate-100">
+    <div className="flex flex-col xl:flex-row items-center justify-between gap-6 mb-12 p-2">
       
-      {/* 1. ESTADO DEL SISTEMA (Monitor Dinámico) */}
-      <div className="flex items-center gap-6 bg-white px-8 py-4 rounded-[2rem] shadow-sm border border-slate-100 w-full lg:w-auto">
-        <div className="relative">
-          <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center text-3xl shadow-inner">
-            💳
+      {/* --- 1. MONITOR DE OCUPACIÓN (DISEÑO DARK PRO) --- */}
+      <div className="flex items-center gap-8 bg-slate-900 px-10 py-6 rounded-[2.5rem] shadow-2xl border border-slate-800 w-full xl:w-auto transition-all hover:scale-[1.02]">
+        <div className="flex flex-col">
+          <span className="text-[10px] font-black text-blue-400 uppercase tracking-[0.3em] mb-2">Ocupación Live</span>
+          <div className="flex items-baseline gap-2">
+            <span className="text-white text-5xl font-black tracking-tighter">{currentOccupancy}</span>
+            <span className="text-slate-500 text-xl font-bold">/ {maxCapacity}</span>
           </div>
-          {/* Punto de pulso "Live" */}
-          <span className="absolute -top-1 -right-1 flex h-4 w-4">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-4 w-4 bg-emerald-500 border-2 border-white"></span>
-          </span>
         </div>
-        
-        <div>
-          <div className="flex items-center gap-2">
-            <h4 className="text-sm font-black text-slate-800 uppercase tracking-tighter">Pasarela de Pagos</h4>
-            <span className="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-md font-black uppercase tracking-widest">
-              Online
-            </span>
-          </div>
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.1em] mt-1">
-            Núcleo GymFlow • Conexión Estable
-          </p>
+
+        {/* Barra técnica indicadora */}
+        <div className="hidden md:block w-32 h-2.5 bg-slate-800 rounded-full overflow-hidden border border-slate-700">
+          <div 
+            className="h-full bg-blue-500 rounded-full shadow-[0_0_20px_rgba(59,130,246,0.6)] transition-all duration-1000 ease-out"
+            style={{ width: `${percentage}%` }}
+          ></div>
         </div>
       </div>
 
-      {/* 2. ACCIONES (Botones Pro) */}
-      <div className="flex items-center gap-4 w-full lg:w-auto">
-        
-        {/* Exportar: Estilo "Glass" o Sutil */}
+      {/* --- 2. ESTADO DE PASARELA (DISCRETO) --- */}
+      <div className="flex items-center gap-4 bg-white px-6 py-4 rounded-2xl border border-slate-100 shadow-sm">
+        <div className="relative flex h-3 w-3">
+          {isOnline && (
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+          )}
+          <span className={`relative inline-flex rounded-full h-3 w-3 ${isOnline ? 'bg-emerald-500' : 'bg-red-500'}`}></span>
+        </div>
+        <span className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">
+          Pasarela {isOnline ? 'Activa' : 'Offline'}
+        </span>
+      </div>
+
+      {/* --- 3. ACCIONES PRINCIPALES --- */}
+      <div className="flex items-center gap-4 w-full xl:w-auto">
         <button 
           onClick={onExportPDF}
-          className="flex-1 lg:flex-none flex items-center justify-center gap-3 px-8 py-5 bg-white border-2 border-slate-100 text-slate-600 rounded-[1.5rem] font-black text-[11px] uppercase tracking-widest hover:bg-slate-50 hover:border-slate-300 hover:text-slate-900 transition-all active:scale-95"
+          className="flex-1 xl:flex-none flex items-center justify-center gap-3 px-8 py-5 bg-white border-2 border-slate-100 text-slate-500 rounded-[1.8rem] font-black text-[11px] uppercase tracking-widest hover:border-slate-300 hover:text-slate-800 transition-all active:scale-95"
         >
-          <span className="text-xl">📄</span>
-          Exportar Reporte
+          <span className="text-lg">📄</span>
+          Reporte
         </button>
 
-        {/* Nueva Suscripción: El protagonista (Diseño XL con Sombra Pro) */}
         <button 
           onClick={onOpenModal}
-          className="flex-1 lg:flex-none flex items-center justify-center gap-4 px-10 py-5 bg-blue-600 text-white rounded-[1.5rem] font-black text-[11px] uppercase tracking-[0.15em] shadow-2xl shadow-blue-400/40 hover:bg-blue-700 hover:-translate-y-1 transition-all active:scale-95"
+          className="flex-1 xl:flex-none flex items-center justify-center gap-4 px-10 py-5 bg-blue-600 text-white rounded-[1.8rem] font-black text-[11px] uppercase tracking-[0.15em] shadow-2xl shadow-blue-500/30 hover:bg-blue-700 hover:-translate-y-2 transition-all active:scale-95"
         >
           <span className="text-2xl leading-none">+</span>
-          Nueva Suscripción
+          Suscripción
         </button>
-
       </div>
+
     </div>
   );
 }
