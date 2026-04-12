@@ -37,7 +37,7 @@ export default function AddSubscriptionModal({ isOpen, onClose, users, newSub, s
     fetchPrices();
   }, [isOpen]);
 
-  // Limpiar búsqueda al cerrar
+  // Limpiar búsqueda al cerrar el modal
   useEffect(() => {
     if (!isOpen) {
       setSearchTerm("");
@@ -45,6 +45,7 @@ export default function AddSubscriptionModal({ isOpen, onClose, users, newSub, s
     }
   }, [isOpen]);
 
+  // Actualizar precio automáticamente al cambiar el plan
   useEffect(() => {
     if (!loadingPrices && newSub.tipo_plan && prices[newSub.tipo_plan] !== undefined) {
       setNewSub(prev => ({ ...prev, precio: prices[newSub.tipo_plan] }));
@@ -53,11 +54,11 @@ export default function AddSubscriptionModal({ isOpen, onClose, users, newSub, s
 
   // 🧠 FILTRADO DE USUARIOS EN TIEMPO REAL
   const filteredUsers = useMemo(() => {
-    if (!searchTerm) return [];
+    if (!searchTerm || searchTerm.length < 2) return [];
     return users.filter(u => 
       u.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       u.email?.toLowerCase().includes(searchTerm.toLowerCase())
-    ).slice(0, 5); // Solo mostramos los 5 mejores resultados para no saturar
+    ).slice(0, 5); 
   }, [users, searchTerm]);
 
   if (!isOpen) return null;
@@ -66,7 +67,14 @@ export default function AddSubscriptionModal({ isOpen, onClose, users, newSub, s
     <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-md flex items-center justify-center z-[100] p-4">
       <div className="bg-white rounded-[3.5rem] p-12 w-full max-w-md shadow-2xl animate-in zoom-in duration-300 relative">
         
-        <button onClick={onClose} className="absolute top-10 right-10 text-3xl text-slate-300 hover:text-slate-600 transition-colors">✕</button>
+        {/* Botón Cerrar */}
+        <button 
+          type="button"
+          onClick={onClose} 
+          className="absolute top-10 right-10 text-3xl text-slate-300 hover:text-slate-600 transition-colors"
+        >
+          ✕
+        </button>
 
         <div className="mb-10">
           <h2 className="text-4xl font-black text-slate-800 tracking-tighter">Nueva Membresía</h2>
@@ -95,11 +103,11 @@ export default function AddSubscriptionModal({ isOpen, onClose, users, newSub, s
                 }}
                 onFocus={() => setIsDropdownOpen(true)}
               />
-              <span className="absolute right-5 top-1/2 -translate-y-1/2 text-xl opacity-30">🔍</span>
+              <span className="absolute right-5 top-1/2 -translate-y-1/2 text-xl opacity-30 pointer-events-none">🔍</span>
             </div>
 
             {/* LISTA DE RESULTADOS FLOTANTE */}
-            {isDropdownOpen && searchTerm.length > 0 && (
+            {isDropdownOpen && searchTerm.length >= 2 && (
               <div className="absolute z-50 w-full mt-2 bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden animate-in fade-in slide-in-from-top-2">
                 {filteredUsers.length > 0 ? (
                   filteredUsers.map(u => (
@@ -112,7 +120,7 @@ export default function AddSubscriptionModal({ isOpen, onClose, users, newSub, s
                         setSearchTerm(u.nombre.toUpperCase());
                         setIsDropdownOpen(false);
                       }}
-                    >
+                     Vite>
                       <span className="font-black text-slate-800 text-sm">{u.nombre.toUpperCase()}</span>
                       <span className="text-[10px] text-slate-400 font-bold tracking-tight">{u.email}</span>
                     </button>
@@ -134,6 +142,7 @@ export default function AddSubscriptionModal({ isOpen, onClose, users, newSub, s
           </div>
 
           <div className="grid grid-cols-2 gap-6">
+            {/* Plan */}
             <div className="space-y-3">
               <label className="text-xs font-black text-blue-600 uppercase ml-1 tracking-widest block">
                 Plan
@@ -149,6 +158,7 @@ export default function AddSubscriptionModal({ isOpen, onClose, users, newSub, s
               </select>
             </div>
 
+            {/* Importe */}
             <div className="space-y-3">
               <label className="text-xs font-black text-blue-600 uppercase ml-1 tracking-widest block">
                 Importe (€)
@@ -163,6 +173,7 @@ export default function AddSubscriptionModal({ isOpen, onClose, users, newSub, s
             </div>
           </div>
 
+          {/* Botones de Acción */}
           <div className="flex items-center gap-6 pt-4">
             <button 
               type="button" 
@@ -187,3 +198,4 @@ export default function AddSubscriptionModal({ isOpen, onClose, users, newSub, s
       </div>
     </div>
   );
+}
