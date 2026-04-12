@@ -68,8 +68,10 @@ export default function PaymentsSection() {
         </div>
         
         {/* Tabla con la información filtrada */}
-        <PaymentsTable subscriptions={dataFiltrada} />
-
+        <PaymentsTable 
+          subscriptions={dataFiltrada} 
+          activeTab={activeTab} // <-- ESTA LÍNEA ES CLAVE
+        />
       </div>
 
       <AddSubscriptionModal 
