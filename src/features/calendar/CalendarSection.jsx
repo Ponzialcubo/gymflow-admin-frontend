@@ -7,17 +7,64 @@ export default function CalendarSection() {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [classToEdit, setClassToEdit] = useState(null);
-  const [selectedDay, setSelectedDay] = useState(new Date().getDay());
 
-  const diasSemana = [
-    { id: 1, label: 'Lunes', short: 'Lun' },
-    { id: 2, label: 'Martes', short: 'Mar' },
-    { id: 3, label: 'Miércoles', short: 'Mié' },
-    { id: 4, label: 'Jueves', short: 'Jue' },
-    { id: 5, label: 'Viernes', short: 'Vie' },
-    { id: 6, label: 'Sábado', short: 'Sáb' },
-    { id: 0, label: 'Domingo', short: 'Dom' },
-  ];
+  // --- 🧠 NUEVA LÓGICA DE FECHAS EXACTAS ---
+  
+  // 1. Buscamos el lunes de la semana que el usuario está viendo
+  const getStartOfWeek = (date) => {
+    const d = new Date(date);
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Ajuste para que la semana empiece en Lunes
+    return new Date(d.setDate(diff));
+  };
+
+  const [currentWeekStart, setCurrentWeekStart] = useState(getStartOfWeek(new Date()));
+  
+  // 2. Estado para el día exacto seleccionado (Arranca en hoy, formato YYYY-MM-DD)
+  const [selectedDate, setSelectedDate] = useState(() => {
+    const tzoffset = (new Date()).getTimezoneOffset() * 60000; 
+    return new Date(Date.now() - tzoffset).toISOString().split('T')[0];
+  });
+
+  // 3. Generamos los 7 días de la semana basados en el currentWeekStart
+  const generarDiasSemana = () => {
+    const days = [];
+    const labels = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+    const shorts = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+
+    for (let i = 0; i < 7; i++) {
+      const currentDate = new Date(currentWeekStart);
+      currentDate.setDate(currentWeekStart.getDate() + i);
+      
+      const tzoffset = currentDate.getTimezoneOffset() * 60000;
+      const dateString = new Date(currentDate - tzoffset).toISOString().split('T')[0];
+
+      days.push({
+        dateString: dateString, // Ej: "2026-04-06"
+        label: labels[currentDate.getDay()],
+        short: shorts[currentDate.getDay()],
+        dayNumber: currentDate.getDate() // Ej: 6
+      });
+    }
+    return days;
+  };
+
+  const diasSemana = generarDiasSemana();
+
+  // Funciones para navegar entre semanas
+  const prevWeek = () => {
+    const newDate = new Date(currentWeekStart);
+    newDate.setDate(newDate.getDate() - 7);
+    setCurrentWeekStart(newDate);
+  };
+
+  const nextWeek = () => {
+    const newDate = new Date(currentWeekStart);
+    newDate.setDate(newDate.getDate() + 7);
+    setCurrentWeekStart(newDate);
+  };
+  
+  // --- FIN LÓGICA DE FECHAS ---
 
   const fetchClases = async () => {
     try {
@@ -40,7 +87,12 @@ export default function CalendarSection() {
     fetchClases();
   }, []);
 
-  const clasesDelDia = clases.filter(clase => new Date(clase.horario).getDay() === selectedDay);
+  // 🛡️ EL ESCUDO: Filtramos comparando la FECHA EXACTA (YYYY-MM-DD), no el día de la semana
+  const clasesDelDia = clases.filter(clase => {
+    if (!clase.horario) return false;
+    const claseDateStr = clase.horario.split('T')[0]; // Extraemos solo la parte de la fecha de Supabase
+    return claseDateStr === selectedDate;
+  });
 
   const formatTime = (dateStr) => {
     return new Date(dateStr).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
@@ -68,29 +120,43 @@ export default function CalendarSection() {
   };
 
   return (
-    // UNIFICADO: Solo fade-in, duration-700 y space-y-8 para consistencia total
     <div className="animate-in fade-in duration-700 pb-20 space-y-8">
       
-      {/* BARRA DE HERRAMIENTAS (Sin cambios en lógica, solo consistencia) */}
+      {/* BARRA DE NAVEGACIÓN DE SEMANAS Y DÍAS */}
       <div className="flex flex-col xl:flex-row items-stretch gap-6">
         
-        <div className="flex-1 flex justify-between gap-2 p-3 bg-white rounded-[2.5rem] shadow-xl shadow-slate-200/20 border border-slate-100">
-          {diasSemana.map((dia) => (
-            <button
-              key={dia.id}
-              onClick={() => setSelectedDay(dia.id)}
-              className={`flex-1 py-5 rounded-[1.5rem] flex flex-col items-center justify-center transition-all ${
-                selectedDay === dia.id 
-                ? 'bg-blue-600 text-white shadow-xl shadow-blue-200/50 transform scale-105' 
-                : 'bg-transparent text-slate-400 hover:bg-slate-100 hover:text-slate-800'
-              }`}
-            >
-              <span className={`text-[11px] font-black uppercase tracking-[0.2em] mb-1 ${selectedDay === dia.id ? 'opacity-80' : ''}`}>
-                {dia.short}
-              </span>
-              <span className="text-lg font-black tracking-tight">{dia.label}</span>
-            </button>
-          ))}
+        <div className="flex-1 flex bg-white rounded-[2.5rem] shadow-xl shadow-slate-200/20 border border-slate-100 overflow-hidden p-2">
+          
+          {/* Botón Semana Anterior */}
+          <button onClick={prevWeek} className="px-4 text-slate-400 hover:bg-slate-100 hover:text-slate-800 rounded-2xl transition-all">
+            <span className="text-2xl font-black">‹</span>
+          </button>
+
+          {/* Días de la semana dinámicos */}
+          <div className="flex-1 flex justify-between gap-1 px-2">
+            {diasSemana.map((dia) => (
+              <button
+                key={dia.dateString}
+                onClick={() => setSelectedDate(dia.dateString)}
+                className={`flex-1 py-4 rounded-[1.5rem] flex flex-col items-center justify-center transition-all ${
+                  selectedDate === dia.dateString 
+                  ? 'bg-blue-600 text-white shadow-xl shadow-blue-200/50 transform scale-105 z-10' 
+                  : 'bg-transparent text-slate-400 hover:bg-slate-100 hover:text-slate-800'
+                }`}
+              >
+                <span className={`text-[11px] font-black uppercase tracking-[0.2em] mb-1 ${selectedDate === dia.dateString ? 'opacity-80' : ''}`}>
+                  {dia.short} {dia.dayNumber}
+                </span>
+                <span className="text-lg font-black tracking-tight">{dia.label}</span>
+              </button>
+            ))}
+          </div>
+
+          {/* Botón Semana Siguiente */}
+          <button onClick={nextWeek} className="px-4 text-slate-400 hover:bg-slate-100 hover:text-slate-800 rounded-2xl transition-all">
+            <span className="text-2xl font-black">›</span>
+          </button>
+
         </div>
 
         <button 
@@ -101,7 +167,7 @@ export default function CalendarSection() {
         </button>
       </div>
 
-      {/* CONTENEDOR DE CLASES */}
+      {/* CONTENEDOR DE CLASES EXACTAMENTE IGUAL QUE ANTES */}
       <div className="w-full">
         {loading ? (
           <div className="p-20 text-center animate-pulse font-black text-slate-300 uppercase tracking-widest">
