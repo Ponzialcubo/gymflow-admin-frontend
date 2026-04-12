@@ -1,25 +1,23 @@
 import React from 'react';
-import SystemStatus from '../../features/dashboard/components/SystemStatus'; 
 import CapacityCounter from './CapacityCounter';
 
 const DashboardHeader = ({ title, user }) => {
   return (
-    <header className="mb-10 flex justify-between items-center">
+    <header className="mb-12 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
       <div>
-        <h1 className="text-4xl font-black text-slate-900 tracking-tighter">
+        <h1 className="text-5xl font-black text-slate-900 tracking-tighter">
           {title}
         </h1>
-        <p className="text-slate-400 text-sm font-bold uppercase tracking-widest mt-1">
-          {user?.rol === 'admin' ? 'Panel de Administración' : 'Panel de Instructor'}
-        </p>
+        <div className="flex items-center gap-2 mt-2">
+          <span className="h-1.5 w-1.5 rounded-full bg-blue-600"></span>
+          <p className="text-slate-400 text-xs font-bold uppercase tracking-[0.2em]">
+            {user?.rol === 'admin' ? 'Sede Central • Gestión Pro' : 'Panel de Instructor'}
+          </p>
+        </div>
       </div>
 
-      {/* Contenedor para los widgets de estado */}
-      <div className="flex items-center gap-4">
-        <CapacityCounter />
-        <SystemStatus />
-      </div>
-      
+      {/* Widget de Ocupación con diseño de alto impacto */}
+      <CapacityCounter />
     </header>
   );
 };
