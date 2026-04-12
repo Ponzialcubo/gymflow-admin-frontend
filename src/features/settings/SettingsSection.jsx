@@ -17,12 +17,10 @@ export default function SettingsSection() {
   return (
     <div className="w-full max-w-[1600px] mx-auto px-6 lg:px-16 py-10 animate-in fade-in duration-700">
       
-      {/* 🚀 Hemos quitado el div del título de aquí para evitar la repetición */}
-
-      <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-16 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-20 items-start">
         
-        {/* MENÚ LATERAL */}
-        <div className="flex flex-col gap-4">
+        {/* MENÚ LATERAL: Se mantiene flotando elegantemente a la izquierda */}
+        <div className="flex flex-col gap-4 sticky top-10">
           <button 
             onClick={() => handleTabChange('perfil')}
             className={`w-full flex items-center gap-6 px-10 py-7 rounded-[2.5rem] font-black text-xs uppercase tracking-widest transition-all duration-500 ${
@@ -68,9 +66,9 @@ export default function SettingsSection() {
           </button>
         </div>
 
-        {/* ÁREA DE CONTENIDO */}
-        <div className="bg-white rounded-[4rem] p-12 lg:p-20 shadow-xl shadow-slate-200/30 border border-slate-100 min-h-[600px] relative">
-          <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+        {/* ÁREA DE CONTENIDO: ¡Adiós caja blanca! Ahora es un espacio abierto y fluido */}
+        <div className="min-h-[600px] py-4">
+          <div className="animate-in fade-in slide-in-from-right-8 duration-700 ease-out">
             {activeTab === 'perfil' && <ProfileSettings />}
             {activeTab === 'centro' && <GymSettings />}
             {activeTab === 'equipo' && <StaffSettings />} 
