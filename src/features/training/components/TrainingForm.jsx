@@ -43,10 +43,11 @@ export default function TrainingForm({
                   key={dia}
                   type="button"
                   onClick={() => toggleDia(dia)}
-                  className={`py-4 rounded-xl text-[10px] font-black transition-all border-2 ${
+                  // --- 👇 AQUÍ ESTÁ EL CAMBIO: text-xs lg:text-sm y tracking-widest ---
+                  className={`py-4 rounded-xl text-xs lg:text-sm tracking-widest font-black transition-all border-2 ${
                     diasSeleccionados.includes(dia) 
-                    ? 'bg-blue-600 border-blue-600 text-white shadow-lg' 
-                    : 'bg-white border-slate-100 text-slate-400'
+                    ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-600/30' 
+                    : 'bg-white border-slate-100 text-slate-400 hover:border-slate-300 hover:text-slate-600'
                   }`}
                 >
                   {dia.substring(0, 3).toUpperCase()}
@@ -58,7 +59,7 @@ export default function TrainingForm({
           <button 
             type="submit"
             disabled={loading}
-            className={`w-full py-5 bg-blue-600 text-white font-black rounded-2xl shadow-xl hover:bg-blue-700 transition-all uppercase tracking-widest text-xs ${loading ? 'opacity-50' : ''}`}
+            className={`w-full py-5 bg-blue-600 text-white font-black rounded-2xl shadow-xl shadow-blue-600/20 hover:bg-blue-700 hover:-translate-y-1 transition-all uppercase tracking-widest text-xs active:scale-95 ${loading ? 'opacity-50 pointer-events-none' : ''}`}
           >
             {loading ? 'Sincronizando...' : 'Confirmar Planificación'}
           </button>
@@ -70,8 +71,8 @@ export default function TrainingForm({
 
 function VolumenInput({ label, value, onChange }) {
   return (
-    <div className="bg-slate-50 p-6 rounded-3xl border border-slate-100 text-center">
-      <label className="text-[9px] font-black text-slate-400 uppercase block mb-1">{label}</label>
+    <div className="bg-slate-50 p-6 rounded-3xl border border-slate-100 text-center transition-all focus-within:border-blue-400 focus-within:bg-white focus-within:shadow-lg">
+      <label className="text-[9px] font-black text-slate-400 uppercase block mb-1 tracking-widest">{label}</label>
       <input 
         type="number" 
         className="w-full bg-transparent text-3xl font-black text-slate-800 text-center outline-none" 
