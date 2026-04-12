@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '../../../config/supabase';
+import { supabase } from "../../../config/supabase";
 
 export const useFinances = () => {
   const [movimientos, setMovimientos] = useState([]);
@@ -11,37 +11,41 @@ export const useFinances = () => {
     try {
       setLoading(true);
 
-      // 1. OBTENER INGRESOS (Suscripciones reales)
-      const { data: subsData, error: subsError } = await supabase
-        .from('suscripciones')
-        .select(`id, tipo_plan, estado, precio, fecha_inicio, usuarios(nombre)`)
-        .order('fecha_inicio', { ascending: false });
+      // 1. CONSULTAS PARALELAS (Siguiendo la lógica de usePayments)
+      const [resRecibos, resGastos] = await Promise.all([
+        // Solo traemos lo que es un RECIBO REAL de pago
+        supabase
+          .from('suscripciones')
+          .select('id, tipo_plan, precio, fecha_inicio, usuarios(nombre)')
+          .eq('estado', 'recibo_generado') // <--- CRÍTICO: Solo dinero real
+          .order('fecha_inicio', { ascending: false }),
+        
+        // Traemos los gastos reales de la tabla de gastos
+        supabase
+          .from('gastos')
+          .select('*')
+          .order('fecha', { ascending: false })
+      ]);
 
-      if (subsError) throw subsError;
+      if (resRecibos.error) throw resRecibos.error;
+      if (resGastos.error) throw resGastos.error;
 
-      const ingresosReales = (subsData || [])
-        .filter(s => s.estado === 'recibo_generado' || s.estado === 'recibo' || s.estado === 'activo')
-        .map(s => ({
-          id: `REC-${s.id.substring(0, 6).toUpperCase()}`,
-          fecha: new Date(s.fecha_inicio).toLocaleDateString('es-ES'),
-          concepto: `Cuota: ${s.usuarios?.nombre || 'Socio'} - ${s.tipo_plan}`,
-          categoria: 'Membresías',
-          tipo: 'ingreso',
-          importe: parseFloat(s.precio) || 0,
-          estado: 'COMPLETADO',
-          fechaRaw: new Date(s.fecha_inicio)
-        }));
+      // 2. FORMATEAR INGRESOS (Transformamos recibos en movimientos de caja)
+      const ingresosFormateados = (resRecibos.data || []).map(r => ({
+        id: `REC-${r.id.toString().substring(0, 6).toUpperCase()}`,
+        fecha: new Date(r.fecha_inicio).toLocaleDateString('es-ES'),
+        // El concepto ya viene limpio del hook de pagos (ej: "AJUSTE: Basic -> Pro")
+        concepto: r.tipo_plan.includes(':') ? r.tipo_plan : `CUOTA: ${r.usuarios?.nombre || 'Socio'} - ${r.tipo_plan}`,
+        categoria: 'Membresías',
+        tipo: 'ingreso',
+        importe: parseFloat(r.precio) || 0,
+        estado: 'COMPLETADO',
+        fechaRaw: new Date(r.fecha_inicio)
+      }));
 
-      // 2. OBTENER GASTOS (De tu tabla real en Supabase)
-      const { data: gastosData, error: gastosError } = await supabase
-        .from('gastos')
-        .select('*')
-        .order('fecha', { ascending: false });
-
-      if (gastosError) throw gastosError;
-
-      const gastosReales = (gastosData || []).map(g => ({
-        id: `GST-${g.id.substring(0, 5).toUpperCase()}`,
+      // 3. FORMATEAR GASTOS (De tu tabla de gastos)
+      const gastosFormateados = (resGastos.data || []).map(g => ({
+        id: `GST-${g.id.toString().substring(0, 5).toUpperCase()}`,
         fecha: new Date(g.fecha).toLocaleDateString('es-ES'),
         concepto: g.concepto,
         categoria: g.categoria,
@@ -51,36 +55,62 @@ export const useFinances = () => {
         fechaRaw: new Date(g.fecha)
       }));
 
-      // 3. UNIR TODO (Sin simulaciones)
-      const todosLosMovimientos = [...ingresosReales, ...gastosReales]
+      // 4. UNIR Y ORDENAR LIBRO MAYOR
+      const todosLosMovimientos = [...ingresosFormateados, ...gastosFormateados]
         .sort((a, b) => b.fechaRaw - a.fechaRaw);
 
       setMovimientos(todosLosMovimientos);
 
-      // 4. CALCULAR MÉTRICAS REALES
-      const ingresos = ingresosReales.reduce((acc, m) => acc + m.importe, 0);
-      const gastos = gastosReales.reduce((acc, m) => acc + m.importe, 0);
+      // 5. CÁLCULO DE MÉTRICAS REALES (Sin duplicados)
+      const totalIngresos = ingresosFormateados.reduce((acc, curr) => acc + curr.importe, 0);
+      const totalGastos = gastosFormateados.reduce((acc, curr) => acc + curr.importe, 0);
       
-      setStats({ ingresos, gastos, neto: ingresos - gastos });
+      setStats({
+        ingresos: totalIngresos,
+        gastos: totalGastos,
+        neto: totalIngresos - totalGastos
+      });
 
-      // 5. PREPARAR GRÁFICO (Diferenciando histórico vs mes actual real)
-      const mesesNombres = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-      const mesActual = new Date().getMonth();
+      // 6. LÓGICA DEL GRÁFICO (Últimos meses)
+      const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+      const hoy = new Date();
+      
+      // Aquí generamos los 6 meses anteriores dinámicamente
+      const dataGrafico = Array.from({ length: 6 }).map((_, i) => {
+        const d = new Date();
+        d.setMonth(hoy.getMonth() - (5 - i));
+        const mesNombre = meses[d.getMonth()];
+        
+        // Filtramos movimientos que pertenecen a ese mes/año
+        const movsMes = todosLosMovimientos.filter(m => {
+          return m.fechaRaw.getMonth() === d.getMonth() && m.fechaRaw.getFullYear() === d.getFullYear();
+        });
 
-      setDatosGrafico([
-        { mes: mesesNombres[(mesActual - 2 + 12) % 12], ingresos: 0, gastos: 0 },
-        { mes: mesesNombres[(mesActual - 1 + 12) % 12], ingresos: 0, gastos: 0 },
-        { mes: mesesNombres[mesActual], ingresos, gastos },
-      ]);
+        return {
+          mes: mesNombre,
+          ingresos: movsMes.filter(m => m.tipo === 'ingreso').reduce((acc, m) => acc + m.importe, 0),
+          gastos: movsMes.filter(m => m.tipo === 'gasto').reduce((acc, m) => acc + m.importe, 0)
+        };
+      });
+
+      setDatosGrafico(dataGrafico);
 
     } catch (err) {
-      console.error("Error en useFinances:", err.message);
+      console.error("Error financiero:", err.message);
     } finally {
       setLoading(false);
     }
   }, []);
 
-  useEffect(() => { fetchFinanzas(); }, [fetchFinanzas]);
+  useEffect(() => {
+    fetchFinanzas();
+  }, [fetchFinanzas]);
 
-  return { movimientos, stats, datosGrafico, loading, refresh: fetchFinanzas };
+  return { 
+    movimientos, 
+    stats, 
+    datosGrafico, 
+    loading, 
+    refresh: fetchFinanzas 
+  };
 };
