@@ -65,7 +65,8 @@ export default function FinancesSection() {
               </button>
               
               <button 
-                onClick={() => exportToPDF(movimientos, stats)}
+                // 2. AÑADE EL ONCLICK AQUÍ, pasándole los datos
+                onClick={() => exportToPDF(movimientos, stats)} 
                 className="px-6 py-3 bg-red-50 text-red-600 border border-red-100 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-red-100 transition-colors active:scale-95 shadow-sm flex items-center gap-2"
               >
                 <span>📄</span> Reporte PDF
