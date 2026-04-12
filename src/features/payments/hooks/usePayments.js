@@ -6,14 +6,15 @@ export const usePayments = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('membresias'); // Necesario para la UI
   
-  // Guardamos las tarifas en memoria por si cambian de plan
+  // Tarifas en memoria
   const [tarifas, setTarifas] = useState({ Basic: 19.99, Estándar: 29.99, Pro: 39.99 });
 
   const [newSub, setNewSub] = useState({
     id_usuario: '',
     tipo_plan: 'Basic',
-    precio: 19.99, // Se sobrescribirá enseguida con el de la BBDD
+    precio: 19.99, 
     estado: 'activo'
   });
 
@@ -21,7 +22,7 @@ export const usePayments = () => {
     try {
       setLoading(true);
       
-      // Hacemos 3 consultas a la vez para máxima velocidad
+      // Consultas paralelas para máxima velocidad
       const [resSubs, resUsers, resSettings] = await Promise.all([
         supabase
           .from('suscripciones')
@@ -31,7 +32,7 @@ export const usePayments = () => {
         supabase
           .from('usuarios')
           .select('id, nombre, email')
-          .eq('rol', 'socio'), // ⚠️ ARREGLADO: Quitamos eq('activo', true) para que salgan todos
+          .eq('rol', 'socio'),
           
         supabase
           .from('gym_settings')
@@ -46,7 +47,6 @@ export const usePayments = () => {
       setSubscriptions(resSubs.data);
       setUsers(resUsers.data);
 
-      // Si la BBDD nos devuelve las tarifas, las aplicamos
       if (resSettings.data) {
         const bdTarifas = {
           Basic: resSettings.data.precio_basic,
@@ -54,13 +54,11 @@ export const usePayments = () => {
           Pro: resSettings.data.precio_pro
         };
         setTarifas(bdTarifas);
-        
-        // Actualizamos el precio del formulario para que sea el oficial
         setNewSub(prev => ({ ...prev, precio: bdTarifas.Basic }));
       }
 
     } catch (err) {
-      console.error("Error cargando datos de Supabase:", err.message);
+      console.error("Error cargando datos:", err.message);
     } finally {
       setLoading(false);
     }
@@ -75,8 +73,8 @@ export const usePayments = () => {
     try {
       setLoading(true);
 
-      // 1. BUSCAR SUSCRIPCIÓN ACTIVA ACTUAL
-      const { data: subActual, error: errorSub } = await supabase
+      // 1. BUSCAR SUSCRIPCIÓN ACTIVA ACTUAL (Lógica de prorrateo restaurada)
+      const { data: subActual } = await supabase
         .from('suscripciones')
         .select('*')
         .eq('id_usuario', newSub.id_usuario)
@@ -89,7 +87,7 @@ export const usePayments = () => {
         const hoy = new Date();
         const finContrato = new Date(subActual.fecha_fin);
         
-        // Calculamos cuántos días le quedaban de su plan viejo
+        // Calculamos días restantes del plan viejo
         const milisegundosRestantes = finContrato - hoy;
         const diasRestantes = Math.max(0, Math.ceil(milisegundosRestantes / (1000 * 60 * 60 * 24)));
 
@@ -108,7 +106,7 @@ export const usePayments = () => {
       const precioNuevoPlan = parseFloat(newSub.precio);
       const importeAPagar = Math.max(0, precioNuevoPlan - descuentoProrrateo);
 
-      // 3. INSERTAR LA NUEVA SUSCRIPCIÓN (Acceso actual)
+      // 3. INSERTAR LA NUEVA SUSCRIPCIÓN (Acceso del cliente)
       let fechaExpiracion = new Date();
       fechaExpiracion.setMonth(fechaExpiracion.getMonth() + 1);
 
@@ -124,7 +122,7 @@ export const usePayments = () => {
 
       if (insertError) throw insertError;
 
-      // 4. REGISTRAR EL RECIBO DE PAGO (Historial)
+      // 4. REGISTRAR EL RECIBO DE PAGO (Historial contable - Doble entrada restaurada)
       await supabase
         .from('suscripciones')
         .insert([{
@@ -137,15 +135,13 @@ export const usePayments = () => {
             fecha_inicio: new Date().toISOString()
         }]);
 
-      // --- 📢 AQUÍ ESTÁ LA LÓGICA DEL MENSAJE INTELIGENTE ---
       const mensajeExito = subActual 
         ? `Cambio realizado. Se ha aplicado un descuento de ${descuentoProrrateo.toFixed(2)}€ por los días no disfrutados.`
         : `¡Nueva suscripción activada! El socio ya tiene acceso al plan ${newSub.tipo_plan}.`;
 
       setIsModalOpen(false);
       fetchData();
-      alert(mensajeExito); // Lanzamos el mensaje correspondiente
-      // -------------------------------------------------------
+      alert(mensajeExito);
 
     } catch (err) {
       console.error(err);
@@ -156,7 +152,17 @@ export const usePayments = () => {
   };
 
   return {
-    subscriptions, users, loading, isModalOpen, setIsModalOpen,
-    newSub, setNewSub, handleAddSubscription, refresh: fetchData
+    subscriptions, 
+    users, 
+    loading, 
+    isModalOpen, 
+    setIsModalOpen,
+    newSub, 
+    setNewSub, 
+    handleAddSubscription, 
+    refresh: fetchData,
+    activeTab,      
+    setActiveTab,   
+    tarifas         
   };
 };
