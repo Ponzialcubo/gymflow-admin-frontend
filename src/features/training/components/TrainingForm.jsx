@@ -21,13 +21,19 @@ export default function TrainingForm({
   }, [socios, socioSearch]);
 
   // 🧠 FILTRADO DE EJERCICIOS
+  // 🧠 FILTRADO DE EJERCICIOS (Versión Antiaérea 🚀)
   const filteredEjercicios = useMemo(() => {
-    if (ejercicioSearch.length < 2) return [];
-    return ejercicios.filter(e => 
-      e.nombre.toLowerCase().includes(ejercicioSearch.toLowerCase()) ||
-      e.grupo_muscular.toLowerCase().includes(ejercicioSearch.toLowerCase())
-    ).slice(0, 5);
-  }, [ejercicios, ejercicioSearch]);
+  if (ejercicioSearch.length < 2) return [];
+  
+  return ejercicios.filter(e => {
+    // Usamos ?. y || "" para que si el dato no existe, use un texto vacío y no explote
+    const nombre = e?.nombre?.toLowerCase() || "";
+    const grupo = e?.grupo_muscular?.toLowerCase() || "";
+    const busqueda = ejercicioSearch.toLowerCase();
+
+    return nombre.includes(busqueda) || grupo.includes(busqueda);
+  }).slice(0, 5);
+}, [ejercicios, ejercicioSearch]);
 
   return (
     <form onSubmit={onSubmit} className="p-8 md:p-12">
