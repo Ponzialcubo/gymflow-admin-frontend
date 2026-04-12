@@ -14,27 +14,30 @@ export default function AddExpenseModal({ isOpen, onClose, onSuccess }) {
   if (!isOpen) return null;
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setSaving(true);
-    try {
-      const { error } = await supabase.from('gastos').insert([{
-        fecha: form.fecha,
-        concepto: form.concepto,
-        categoria: form.categoria,
-        importe: parseFloat(form.importe),
-        estado: form.estado
+  e.preventDefault();
+  setSaving(true);
+  try {
+    const { error } = await supabase
+      .from('gastos') // Asegúrate de que se llame así en Supabase
+      .insert([{
+        fecha: form.fecha,           // Debe ser formato YYYY-MM-DD
+        concepto: form.concepto,     // Texto
+        categoria: form.categoria,   // Texto
+        importe: parseFloat(form.importe), // Número
+        estado: form.estado          // Texto
       }]);
-      
-      if (error) throw error;
-      onSuccess(); // Refresca la tabla
-      onClose(); // Cierra el modal
-      setForm({ fecha: new Date().toISOString().split('T')[0], concepto: '', categoria: 'Operativo', importe: '', estado: 'COMPLETADO' });
-    } catch (error) {
-      alert("Error al guardar: " + error.message);
-    } finally {
-      setSaving(false);
-    }
-  };
+    
+    if (error) throw error;
+
+    alert("✅ Gasto guardado en la base de datos");
+    onSuccess(); // Esto ejecuta 'refresh' en el componente padre
+    onClose();
+  } catch (error) {
+    alert("Error al guardar: " + error.message);
+  } finally {
+    setSaving(false);
+  }
+};
 
   return (
     <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">
