@@ -1,10 +1,13 @@
+import React from 'react';
+import CapacityCounter from './CapacityCounter';
+
 const DashboardHeader = ({ title, user }) => {
   return (
-    // Reducimos mb-12 a mb-8 para ahorrar espacio vertical
-    <header className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+    // Reducimos el margen inferior a mb-6 para ganar espacio vertical
+    <header className="mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
       <div>
-        {/* Bajamos de text-5xl a text-4xl para el título */}
-        <h1 className="text-4xl font-black text-slate-900 tracking-tighter">
+        {/* Título un poco más pequeño (3xl) para evitar el scroll */}
+        <h1 className="text-3xl font-black text-slate-900 tracking-tighter">
           {title}
         </h1>
         <div className="flex items-center gap-2 mt-1">
@@ -15,7 +18,11 @@ const DashboardHeader = ({ title, user }) => {
         </div>
       </div>
 
+      {/* El contador ahora es la versión ultra-slim */}
       <CapacityCounter />
     </header>
   );
 };
+
+// --- LA LÍNEA QUE ARREGLA EL ERROR DE BUILD ---
+export default DashboardHeader;
