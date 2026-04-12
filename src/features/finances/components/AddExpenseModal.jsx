@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { supabase } from '../../../../config/supabase'; // Ajusta la ruta
+import { supabase } from '../../../config/supabase'; 
 
 export default function AddExpenseModal({ isOpen, onClose, onSuccess }) {
   const [saving, setSaving] = useState(false);
