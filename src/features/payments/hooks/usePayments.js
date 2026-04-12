@@ -71,57 +71,83 @@ export const usePayments = () => {
   }, [fetchData]);
 
   const handleAddSubscription = async (e) => {
-    e.preventDefault();
-    try {
-      // 1. REGLA DE NEGOCIO: Desactivar previa
-      const { error: updateError } = await supabase
-        .from('suscripciones')
-        .update({ estado: 'cancelado' })
-        .eq('id_usuario', newSub.id_usuario)
-        .eq('estado', 'activo'); 
+  e.preventDefault();
+  try {
+    setLoading(true);
 
-      if (updateError) console.warn("Aviso:", updateError);
+    // 1. BUSCAR SUSCRIPCIÓN ACTIVA ACTUAL
+    const { data: subActual, error: errorSub } = await supabase
+      .from('suscripciones')
+      .select('*')
+      .eq('id_usuario', newSub.id_usuario)
+      .eq('estado', 'activo')
+      .maybeSingle();
 
-      // 2. Calculamos expiración
-      let fechaExpiracion = new Date();
-      fechaExpiracion.setMonth(fechaExpiracion.getMonth() + 1);
+    let descuentoProrrateo = 0;
+    let fechaInicioOriginal = new Date();
+
+    if (subActual) {
+      const hoy = new Date();
+      const finContrato = new Date(subActual.fecha_fin);
       
-      // 3. Insertamos la nueva suscripción
-      const { error: insertError } = await supabase
+      // Calculamos cuántos días le quedaban de su plan viejo
+      const milisegundosRestantes = finContrato - hoy;
+      const diasRestantes = Math.max(0, Math.ceil(milisegundosRestantes / (1000 * 60 * 60 * 24)));
+
+      if (diasRestantes > 0) {
+        // Ejemplo: Si el plan valía 20€, y le quedan 15 días, tiene 10€ de "crédito"
+        descuentoProrrateo = (subActual.precio / 30) * diasRestantes;
+      }
+
+      // Cancelamos la anterior
+      await supabase
         .from('suscripciones')
-        .insert([{ 
-            id_usuario: newSub.id_usuario, 
-            tipo_plan: newSub.tipo_plan, 
-            fecha_fin: fechaExpiracion.toISOString(), 
-            precio: parseFloat(newSub.precio), 
-            estado: 'activo' 
-        }]);
-
-      if (insertError) throw insertError;
-
-      // Al dar de alta una suscripción, generamos automáticamente el recibo
-      const { error: pagoError } = await supabase
-        .from('pagos')
-        .insert([{
-            id_usuario: newSub.id_usuario,
-            monto: parseFloat(newSub.precio),
-            concepto: `Mensualidad Plan ${newSub.tipo_plan}`,
-            metodo_pago: 'Tarjeta / Recepción', // O el método que suelas usar
-            estado: 'completado'
-        }]);
-
-      if (pagoError) console.error("Error al registrar el recibo de pago:", pagoError);
-
-      // 4. Limpiamos.
-      setIsModalOpen(false);
-      setNewSub({ id_usuario: '', tipo_plan: 'Basic', precio: tarifas.Basic, estado: 'activo' });
-      fetchData(); 
-      
-    } catch (err) {
-      console.error(err);
-      alert("Error al procesar la suscripción: " + err.message);
+        .update({ estado: 'cancelado', fecha_fin: hoy.toISOString() })
+        .eq('id', subActual.id);
     }
-  };
+
+    // 2. CALCULAR PRECIO FINAL
+    const precioNuevoPlan = parseFloat(newSub.precio);
+    const importeAPagar = Math.max(0, precioNuevoPlan - descuentoProrrateo);
+
+    // 3. INSERTAR LA NUEVA SUSCRIPCIÓN (Ciclo nuevo de 30 días)
+    let fechaExpiracion = new Date();
+    fechaExpiracion.setMonth(fechaExpiracion.getMonth() + 1);
+
+    const { error: insertError } = await supabase
+      .from('suscripciones')
+      .insert([{ 
+          id_usuario: newSub.id_usuario, 
+          tipo_plan: newSub.tipo_plan, 
+          fecha_fin: fechaExpiracion.toISOString(), 
+          precio: precioNuevoPlan, // El precio del plan es el real
+          estado: 'activo' 
+      }]);
+
+    if (insertError) throw insertError;
+
+    // 4. REGISTRAR EL PAGO REAL (Lo que Marta ve en su móvil)
+    await supabase
+      .from('suscripciones')
+      .insert([{
+          id_usuario: newSub.id_usuario,
+          tipo_plan: `AJUSTE: ${subActual?.tipo_plan || 'Ninguno'} -> ${newSub.tipo_plan}`,
+          precio: importeAPagar, // Esto es lo que realmente cobramos hoy
+          estado: 'recibo_generado', // Usamos un estado que no sea 'activo' para que no cuente como membresía
+          fecha_inicio: new Date().toISOString()
+      }]);
+
+    setIsModalOpen(false);
+    fetchData();
+    alert(`Cambio realizado. Se ha aplicado un descuento de ${descuentoProrrateo.toFixed(2)}€ por los días no disfrutados.`);
+
+  } catch (err) {
+    console.error(err);
+    alert("Error: " + err.message);
+  } finally {
+    setLoading(false);
+  }
+};
 
   return {
     subscriptions, users, loading, isModalOpen, setIsModalOpen,
