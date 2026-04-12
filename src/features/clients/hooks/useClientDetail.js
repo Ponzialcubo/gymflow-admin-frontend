@@ -100,29 +100,41 @@ export const useClientDetail = (socioId, onBack) => {
       let imcCalculado = null;
 
       if (peso > 0 && altura > 0) {
-        imcCalculado = (peso / Math.pow(altura / 100, 2)).toFixed(1);
+        // Aseguramos que el IMC se mande como número y no como string
+        imcCalculado = parseFloat((peso / Math.pow(altura / 100, 2)).toFixed(1));
       }
 
-      const { error } = await supabase.from('mediciones').insert([{
+      // --- 🛡️ ESCUDOS DE DATOS ---
+      // Si la grasa está vacía, mandamos null en vez de NaN
+      const grasa = newMedicion.grasa_porcentaje ? parseFloat(newMedicion.grasa_porcentaje) : null;
+      // Si las notas están vacías, mandamos null
+      const notas = newMedicion.notas_monitor ? newMedicion.notas_monitor.trim() : null;
+
+      // Imprimimos en consola para ver exactamente qué estamos mandando
+      const payload = {
         id_usuario: socioId,
         peso_kg: peso,
         altura_cm: altura,
         imc: imcCalculado,
-        grasa_porcentaje: parseFloat(newMedicion.grasa_porcentaje),
-        notas_monitor: newMedicion.notas_monitor
-      }]);
+        grasa_porcentaje: grasa,
+        notas_monitor: notas
+      };
+      console.log("📦 Datos listos para Supabase:", payload);
+
+      const { error } = await supabase.from('mediciones').insert([payload]);
       
-      if (error) throw error;
+      if (error) throw error; // Si falla, salta al catch de abajo
       
       setIsMedicionModalOpen(false);
       setNewMedicion({ peso_kg: '', altura_cm: '', imc: '', grasa_porcentaje: '', notas_monitor: '' });
       fetchData();
     } catch (err) { 
-      console.error("Error en BD:", err);
-      alert("Error al registrar medición."); 
+      // Aquí está el truco: Imprimimos el error REAL de la base de datos
+      console.error("🔥 Error EXACTO de Supabase:", err);
+      alert(`Error al registrar: ${err.message || "Revisa la consola F12"}`); 
     }
   };
-
+  
   const handleAddDieta = async (e) => {
     e.preventDefault();
     try {
