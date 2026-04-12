@@ -3,7 +3,7 @@ import { useSettings } from '../hooks/useSettings';
 
 export default function GymSettings() {
   // Nos traemos toda la artillería pesada del Hook
-  const { gymSettings, savingGym, handleChangeGymSettings, handleUpdateGymSettings, loading } = useSettings();
+  const { gymSettings, savingGym, handleChangeGymSettings, handleUpdateGymSettings, loading, mensaje } = useSettings();
 
   if (loading) {
     return <div className="p-20 text-center animate-pulse font-black text-slate-300 uppercase tracking-widest">Cargando parámetros de sede...</div>;

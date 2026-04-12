@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { useSettings } from '../hooks/useSettings'; // Ajusta la ruta si es necesario
+import { useSettings } from '../hooks/useSettings'; 
 
 export default function SecuritySettings() {
-  const { handleUpdatePassword } = useSettings();
+  const { handleUpdatePassword, mensaje } = useSettings();
   
   // Como Supabase Auth no requiere la contraseña actual si la sesión está activa, 
   // podríamos omitirla, pero la mantenemos por UX (da sensación de seguridad).
