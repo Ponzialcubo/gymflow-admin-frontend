@@ -5,10 +5,8 @@ import FinanceChart from './components/FinanceChart';
 import FinanceTable from './components/FinanceTable';
 
 export default function FinancesSection() {
-  // 1. Extraemos toda la información ya procesada por nuestro Hook
   const { movimientos, stats, datosGrafico, loading } = useFinances();
 
-  // 2. Pantalla de carga estilo GymFlow Pro
   if (loading) {
     return (
       <div className="w-full pt-32 text-center animate-pulse">
@@ -23,14 +21,11 @@ export default function FinancesSection() {
   return (
     <div className="w-full max-w-7xl mx-auto px-4 pb-20 animate-in fade-in duration-700">
       
-      {/* HEADER SIMPLE */}
-      <div className="flex justify-between items-end mb-10 mt-4">
-        <div>
-          <h1 className="text-4xl font-black text-slate-800 tracking-tighter">Caja y Finanzas</h1>
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-2">
-            Resumen Financiero • Libro Mayor
-          </p>
-        </div>
+      {/* QUITAMOS EL TÍTULO DUPLICADO. 
+        Solo dejamos el botón de "Añadir Movimiento" alineado a la derecha,
+        con un margen para que no se pegue al Header Global.
+      */}
+      <div className="flex justify-end mb-8 mt-2">
         <button className="px-8 py-4 bg-blue-600 text-white rounded-[1.5rem] font-black text-[10px] uppercase tracking-widest shadow-xl shadow-blue-200 hover:bg-blue-700 transition-all flex items-center gap-2 active:scale-95">
           <span className="text-lg">+</span> Añadir Movimiento
         </button>
@@ -38,10 +33,10 @@ export default function FinancesSection() {
 
       <div className="space-y-8">
         
-        {/* FILA 1: KPIs Rápidos (Pasamos el objeto stats directamente) */}
+        {/* FILA 1: KPIs Rápidos */}
         <FinanceKPIs stats={stats} />
 
-        {/* FILA 2: El Gráfico (Pasamos datosGrafico) */}
+        {/* FILA 2: El Gráfico */}
         <div className="bg-white p-8 md:p-10 rounded-[3rem] border border-slate-100 shadow-xl shadow-slate-200/20">
           <div className="mb-8">
             <h3 className="text-xl font-black text-slate-800 tracking-tight">Flujo de Caja (6 Meses)</h3>
@@ -50,7 +45,7 @@ export default function FinancesSection() {
           <FinanceChart data={datosGrafico} />
         </div>
 
-        {/* FILA 3: Tabla de Movimientos (Pasamos movimientos) */}
+        {/* FILA 3: Tabla de Movimientos */}
         <div className="bg-white rounded-[3rem] shadow-xl shadow-slate-200/20 border border-slate-100 overflow-hidden">
           <div className="p-8 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
             <div>
