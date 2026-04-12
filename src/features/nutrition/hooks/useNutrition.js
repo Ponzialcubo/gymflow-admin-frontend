@@ -20,10 +20,11 @@ export const useNutrition = () => {
 
   // Estado del lienzo de comidas (Estructura de Nivel 2)
   const [comidas, setComidas] = useState([
-    { id_temporal: 'c1', nombre: 'Desayuno', alimentos: [] },
-    { id_temporal: 'c2', nombre: 'Almuerzo', alimentos: [] },
-    { id_temporal: 'c3', nombre: 'Cena', alimentos: [] }
-  ]);
+  { id_temporal: 'c1', nombre: 'Desayuno', alimentos: [] },
+  { id_temporal: 'c2', nombre: 'Comida', alimentos: [] },   
+  { id_temporal: 'c3', nombre: 'Merienda', alimentos: [] },  
+  { id_temporal: 'c4', nombre: 'Cena', alimentos: [] }       
+]);
 
   // 1. Carga inicial de datos
   useEffect(() => {
@@ -114,9 +115,15 @@ export const useNutrition = () => {
       for (const comida of comidas) {
         if (comida.alimentos.length === 0) continue; 
 
+        // Dentro del bucle for de handleSubmit en useNutrition.js
+
         const { data: comidaData, error: errorComida } = await supabase
           .from('comidas_dieta')
-          .insert([{ id_dieta: dietaId, momento_dia: comida.nombre }])
+          .insert([{ 
+            id_dieta: dietaId, 
+            momento_dia: comida.nombre 
+            // Fíjate que YA NO enviamos la columna "alimentos" aquí
+          }])
           .select('id').single();
           
         if (errorComida) throw errorComida;
