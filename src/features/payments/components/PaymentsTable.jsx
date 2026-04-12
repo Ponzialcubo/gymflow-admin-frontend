@@ -24,14 +24,14 @@ export default function PaymentsTable({ subscriptions, activeTab }) {
         <thead>
           <tr className="border-b border-slate-100">
             {/* Aumento de padding en th para mayor visibilidad */}
-            <th className="px-10 py-6 text-[11px] xl:text-xs font-black text-slate-400 uppercase tracking-[0.2em]">Socio</th>
-            <th className="px-8 py-6 text-[11px] xl:text-xs font-black text-slate-400 uppercase tracking-[0.2em]">
+            <th className="px-10 py-6 text-[13px] xl:text-xs font-black text-slate-400 uppercase tracking-[0.2em]">Socio</th>
+            <th className="px-8 py-6 text-[13px] xl:text-xs font-black text-slate-400 uppercase tracking-[0.2em]">
               {activeTab === 'membresias' ? 'Plan Contratado' : 'Concepto de Pago'}
             </th>
-            <th className="px-8 py-6 text-[11px] xl:text-xs font-black text-slate-400 uppercase tracking-[0.2em]">Importe</th>
-            <th className="px-8 py-6 text-[11px] xl:text-xs font-black text-slate-400 uppercase tracking-[0.2em]">Estado</th>
+            <th className="px-8 py-6 text-[13px] xl:text-xs font-black text-slate-400 uppercase tracking-[0.2em]">Importe</th>
+            <th className="px-8 py-6 text-[13px] xl:text-xs font-black text-slate-400 uppercase tracking-[0.2em]">Estado</th>
             {activeTab === 'membresias' && (
-              <th className="px-8 py-6 text-[11px] xl:text-xs font-black text-slate-400 uppercase tracking-[0.2em] text-right">Fin Contrato</th>
+              <th className="px-8 py-6 text-[13px] xl:text-xs font-black text-slate-400 uppercase tracking-[0.2em] text-right">Fin Contrato</th>
             )}
           </tr>
         </thead>

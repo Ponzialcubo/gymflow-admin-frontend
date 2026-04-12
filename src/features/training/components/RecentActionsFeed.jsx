@@ -1,7 +1,7 @@
 export default function RecentActionsFeed({ recientes }) {
   return (
     <div className="bg-slate-50/50 border-t border-slate-100 p-8">
-      <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
+      <h3 className="text-md font-black text-slate-400 uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
         <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
         Últimas acciones en el servidor
       </h3>
@@ -21,7 +21,7 @@ export default function RecentActionsFeed({ recientes }) {
             </div>
           </div>
         )) : (
-          <p className="text-[10px] text-slate-400 font-bold italic">No hay registros en esta sesión.</p>
+          <p className="text-[12px] text-slate-400 font-bold italic">No hay registros en esta sesión.</p>
         )}
       </div>
     </div>

@@ -32,7 +32,7 @@ export default function PaymentsHeader({ onOpenModal, onExportPDF }) {
         <button 
 
           onClick={onExportPDF}
-          className="flex-1 lg:flex-none flex items-center justify-center gap-3 px-8 py-5 bg-white border-2 border-slate-100 text-slate-600 rounded-[1.5rem] font-black text-[12px] uppercase tracking-widest hover:bg-slate-50 hover:border-slate-300 hover:text-slate-900 transition-all active:scale-95"
+          className="flex-1 lg:flex-none flex items-center justify-center gap-3 px-8 py-5 bg-white border-2 border-slate-100 text-slate-600 rounded-[1.5rem] font-black text-[13px] uppercase tracking-widest hover:bg-slate-50 hover:border-slate-300 hover:text-slate-900 transition-all active:scale-95"
         >
           <span className="text-xl">📄</span>
           Exportar Reporte

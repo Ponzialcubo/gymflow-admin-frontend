@@ -8,7 +8,7 @@ export default function ExercisesControls({ onSearchChange, selectedMuscle, onMu
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8 mb-10">
         <div>
           <h2 className="text-4xl font-black text-slate-800 tracking-tighter">Biblioteca Técnica</h2>
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1">Control de ejercicios por músculo</p>
+          <p className="text-[12px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1">Control de ejercicios por músculo</p>
         </div>
         
         <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto">
@@ -23,7 +23,7 @@ export default function ExercisesControls({ onSearchChange, selectedMuscle, onMu
           </div>
           <button 
             onClick={onOpenModal}
-            className="px-8 py-4 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-600 transition-all shadow-xl"
+            className="px-8 py-4 bg-slate-900 text-white rounded-2xl font-black text-[12px] uppercase tracking-widest hover:bg-blue-600 transition-all shadow-xl"
           >
             + Nuevo Ejercicio
           </button>
@@ -43,7 +43,7 @@ export default function ExercisesControls({ onSearchChange, selectedMuscle, onMu
                 font-black transition-all border-2 rounded-2xl
                 ${isTodos 
                   ? 'px-10 py-4 text-4xl lg:text-4xl tracking-tighter' 
-                  : 'px-6 py-3 text-[10px] uppercase tracking-widest'  
+                  : 'px-6 py-3 text-[12px] uppercase tracking-widest'  
                 }
                 ${selectedMuscle === m 
                   ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-200' 

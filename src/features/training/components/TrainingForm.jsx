@@ -59,7 +59,7 @@ export default function TrainingForm({
           <button 
             type="submit"
             disabled={loading}
-            className={`w-full py-5 bg-blue-600 text-white font-black rounded-2xl shadow-xl shadow-blue-600/20 hover:bg-blue-700 hover:-translate-y-1 transition-all uppercase tracking-widest text-xs active:scale-95 ${loading ? 'opacity-50 pointer-events-none' : ''}`}
+            className={`w-full py-5 bg-blue-600 text-white font-black rounded-2xl shadow-xl shadow-blue-600/20 hover:bg-blue-700 hover:-translate-y-1 transition-all uppercase tracking-widest text-md active:scale-95 ${loading ? 'opacity-50 pointer-events-none' : ''}`}
           >
             {loading ? 'Sincronizando...' : 'Confirmar Planificación'}
           </button>
