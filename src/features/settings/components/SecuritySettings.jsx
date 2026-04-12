@@ -4,15 +4,12 @@ import { useSettings } from '../hooks/useSettings';
 export default function SecuritySettings() {
   const { handleUpdatePassword, mensaje } = useSettings();
   
-  // Como Supabase Auth no requiere la contraseña actual si la sesión está activa, 
-  // podríamos omitirla, pero la mantenemos por UX (da sensación de seguridad).
   const [pass, setPass] = useState({ current: '', new: '', confirm: '' });
   const [isUpdating, setIsUpdating] = useState(false);
 
   const onSubmitForm = async (e) => {
     e.preventDefault();
     
-    // 1. Validaciones básicas front-end
     if (pass.new.length < 8) {
       alert("La nueva contraseña debe tener al menos 8 caracteres.");
       return;
@@ -24,22 +21,16 @@ export default function SecuritySettings() {
     }
 
     setIsUpdating(true);
-    
-    // 2. Llamada a Supabase mediante el Hook
     const success = await handleUpdatePassword(pass.new);
-    
-    // 3. Si todo va bien, limpiamos el formulario
     if (success) {
       setPass({ current: '', new: '', confirm: '' });
     }
-    
     setIsUpdating(false);
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <div className="space-y-8 animate-in fade-in duration-500 relative">
       
-      {/* TARJETA 1: CAMBIO DE CONTRASEÑA */}
       <div className="bg-white p-10 md:p-12 rounded-[3rem] shadow-xl shadow-slate-200/20 border border-slate-100">
         <div className="mb-10 border-b border-slate-100 pb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
@@ -53,7 +44,6 @@ export default function SecuritySettings() {
 
         <form onSubmit={onSubmitForm} className="space-y-8">
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-            
             <div className="space-y-3 xl:col-span-1">
               <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1 block">Contraseña Actual</label>
               <input 
@@ -113,7 +103,6 @@ export default function SecuritySettings() {
         </form>
       </div>
 
-      {/* TARJETA 2: CONTROL DE SESIONES (Se mantiene igual visualmente) */}
       <div className="bg-white p-10 md:p-12 rounded-[3rem] shadow-xl shadow-slate-200/20 border border-slate-100">
         <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div>
@@ -140,17 +129,11 @@ export default function SecuritySettings() {
               Sesión Actual
             </div>
           </div>
-          
-          <div className="flex items-center gap-6 p-6 bg-transparent rounded-[2rem] border border-slate-100">
-            <div className="text-5xl opacity-50">📱</div>
-            <div className="flex-1 opacity-70">
-              <p className="text-xl font-black text-slate-800">iPhone 14 - Safari Mobile</p>
-              <p className="text-xs font-bold text-slate-400 mt-1">Getafe, España • Hace 2 horas</p>
-            </div>
-          </div>
         </div>
       </div>
-        {mensaje && mensaje.texto && (
+
+      {/* TOAST BLINDADO */}
+      {mensaje?.texto && (
         <div className={`fixed bottom-10 right-10 p-5 rounded-2xl shadow-2xl border font-black text-[10px] uppercase tracking-widest z-50 animate-in slide-in-from-bottom-5 ${
           mensaje.tipo === 'success' ? 'bg-emerald-500 text-white border-emerald-400' : 'bg-red-500 text-white border-red-400'
         }`}>

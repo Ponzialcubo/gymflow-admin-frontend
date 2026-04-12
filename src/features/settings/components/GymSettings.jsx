@@ -2,7 +2,6 @@ import React from 'react';
 import { useSettings } from '../hooks/useSettings'; 
 
 export default function GymSettings() {
-  // Nos traemos toda la artillería pesada del Hook
   const { gymSettings, savingGym, handleChangeGymSettings, handleUpdateGymSettings, loading, mensaje } = useSettings();
 
   if (loading) {
@@ -10,8 +9,7 @@ export default function GymSettings() {
   }
 
   return (
-    // Transformamos todo el contenedor en un FORM para usar submit nativo
-    <form onSubmit={handleUpdateGymSettings} className="space-y-8 animate-in fade-in duration-500">
+    <form onSubmit={handleUpdateGymSettings} className="space-y-8 animate-in fade-in duration-500 relative">
       
       {/* TARJETA 1: PLAN DE NEGOCIO */}
       <div className="bg-white p-10 md:p-12 rounded-[3rem] shadow-xl shadow-slate-200/20 border border-slate-100">
@@ -26,7 +24,7 @@ export default function GymSettings() {
             <div className="relative">
               <input 
                 type="number" name="aforo_maximo"
-                value={gymSettings.aforo_maximo} onChange={handleChangeGymSettings}
+                value={gymSettings?.aforo_maximo || 100} onChange={handleChangeGymSettings}
                 className="w-full p-5 bg-slate-50 border-2 border-slate-100 rounded-2xl font-black text-xl outline-none focus:border-slate-800 transition-all text-slate-700" 
               />
               <span className="absolute right-5 top-5 font-bold text-slate-400">pers.</span>
@@ -38,7 +36,7 @@ export default function GymSettings() {
             <div className="relative">
               <input 
                 type="number" step="0.01" name="precio_basic"
-                value={gymSettings.precio_basic} onChange={handleChangeGymSettings}
+                value={gymSettings?.precio_basic || 0} onChange={handleChangeGymSettings}
                 className="w-full p-5 bg-slate-50 border-2 border-slate-100 rounded-2xl font-black text-xl outline-none focus:border-blue-500 transition-all text-slate-700" 
               />
               <span className="absolute right-5 top-5 font-black text-slate-400">€</span>
@@ -50,7 +48,7 @@ export default function GymSettings() {
             <div className="relative">
               <input 
                 type="number" step="0.01" name="precio_estandar"
-                value={gymSettings.precio_estandar} onChange={handleChangeGymSettings}
+                value={gymSettings?.precio_estandar || 0} onChange={handleChangeGymSettings}
                 className="w-full p-5 bg-blue-50/50 border-2 border-blue-100 rounded-2xl font-black text-xl outline-none focus:border-blue-500 transition-all text-blue-700 shadow-[0_0_15px_rgba(37,99,235,0.1)]" 
               />
               <span className="absolute right-5 top-5 font-black text-blue-600">€</span>
@@ -62,7 +60,7 @@ export default function GymSettings() {
             <div className="relative">
               <input 
                 type="number" step="0.01" name="precio_pro"
-                value={gymSettings.precio_pro} onChange={handleChangeGymSettings}
+                value={gymSettings?.precio_pro || 0} onChange={handleChangeGymSettings}
                 className="w-full p-5 bg-amber-50/30 border-2 border-amber-100 rounded-2xl font-black text-xl outline-none focus:border-amber-500 transition-all text-amber-700" 
               />
               <span className="absolute right-5 top-5 font-black text-amber-600">€</span>
@@ -71,7 +69,7 @@ export default function GymSettings() {
         </div>
       </div>
 
-      {/* TARJETA 2: HORARIOS (Mantenida intacta visualmente) */}
+      {/* TARJETA 2: HORARIOS */}
       <div className="bg-white p-10 md:p-12 rounded-[3rem] shadow-xl shadow-slate-200/20 border border-slate-100">
         <div className="mb-10 border-b border-slate-100 pb-8">
           <h3 className="text-3xl font-black text-slate-800 tracking-tight">Horario Operativo</h3>
@@ -105,7 +103,7 @@ export default function GymSettings() {
               <p className="text-[10px] text-slate-400 font-bold uppercase mt-1 tracking-widest">Avisos automáticos a socios</p>
             </div>
             <div className="relative">
-              <input type="checkbox" name="notificaciones_push" checked={gymSettings.notificaciones_push} onChange={handleChangeGymSettings} className="sr-only peer" />
+              <input type="checkbox" name="notificaciones_push" checked={gymSettings?.notificaciones_push || false} onChange={handleChangeGymSettings} className="sr-only peer" />
               <div className="w-14 h-8 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-blue-600"></div>
             </div>
           </label>
@@ -116,13 +114,12 @@ export default function GymSettings() {
               <p className="text-[10px] text-slate-400 font-bold uppercase mt-1 tracking-widest">Bloquear acceso a la App cliente</p>
             </div>
             <div className="relative">
-              <input type="checkbox" name="modo_mantenimiento" checked={gymSettings.modo_mantenimiento} onChange={handleChangeGymSettings} className="sr-only peer" />
+              <input type="checkbox" name="modo_mantenimiento" checked={gymSettings?.modo_mantenimiento || false} onChange={handleChangeGymSettings} className="sr-only peer" />
               <div className="w-14 h-8 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-red-500"></div>
             </div>
           </label>
         </div>
 
-        {/* BOTÓN GUARDAR (Ahora es tipo Submit) */}
         <div className="pt-10 flex justify-end">
           <button 
             type="submit"
@@ -133,7 +130,9 @@ export default function GymSettings() {
           </button>
         </div>
       </div>
-          {mensaje && mensaje.texto && (
+
+      {/* TOAST BLINDADO */}
+      {mensaje?.texto && (
         <div className={`fixed bottom-10 right-10 p-5 rounded-2xl shadow-2xl border font-black text-[10px] uppercase tracking-widest z-50 animate-in slide-in-from-bottom-5 ${
           mensaje.tipo === 'success' ? 'bg-emerald-500 text-white border-emerald-400' : 'bg-red-500 text-white border-red-400'
         }`}>
