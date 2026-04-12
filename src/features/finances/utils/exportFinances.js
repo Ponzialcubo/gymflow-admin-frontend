@@ -1,85 +1,109 @@
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 
-// 📊 FUNCIÓN 1: Exportar a Excel (CSV)
+// 📊 Exportar CSV (Excel) - Formato compatible y limpio
 export const exportToCSV = (movimientos) => {
-  // 1. Cabeceras de las columnas
   const headers = ["ID,Fecha,Concepto,Categoria,Tipo,Importe,Estado\n"];
-  
-  // 2. Filas de datos
   const rows = movimientos.map(m => 
-    `${m.id},${m.fecha},"${m.concepto}",${m.categoria},${m.tipo},${m.importe},${m.estado}`
+    `${m.id},${m.fecha},"${m.concepto}",${m.categoria},${m.tipo},${m.importe.toFixed(2)},${m.estado}`
   );
   
-  // 3. Crear y descargar el archivo
   const blob = new Blob([headers + rows.join("\n")], { type: 'text/csv;charset=utf-8;' });
   const link = document.createElement("a");
   const url = URL.createObjectURL(blob);
-  link.setAttribute("href", url);
-  link.setAttribute("download", `GymFlow_Finanzas_${new Date().toLocaleDateString('es-ES').replace(/\//g, '-')}.csv`);
-  link.style.visibility = 'hidden';
-  document.body.appendChild(link);
+  link.href = url;
+  link.download = `GymFlow_Excel_${new Date().toLocaleDateString('es-ES').replace(/\//g, '-')}.csv`;
   link.click();
-  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
 };
 
-// 📄 FUNCIÓN 2: Exportar a PDF Profesional
+// 📄 Exportar PDF Profesional - Diseño Mejorado
 export const exportToPDF = (movimientos, stats) => {
   const doc = new jsPDF();
+  const fechaHoy = new Date().toLocaleDateString('es-ES');
 
-  // --- Cabecera del Documento ---
+  // --- CABECERA ESTILO PREMIUM ---
   doc.setFontSize(22);
-  doc.setTextColor(30, 41, 59); // Color texto oscuro (Tailwind slate-800)
-  doc.text("Reporte Financiero", 14, 20);
+  doc.setTextColor(15, 23, 42); // slate-900
+  doc.setFont("helvetica", "bold");
+  doc.text("GymFlow Pro - Finanzas", 14, 20);
 
   doc.setFontSize(10);
-  doc.setTextColor(100, 116, 139); // Gris (Tailwind slate-500)
-  doc.text("Sede Central - Gestión Pro", 14, 28);
-  doc.text(`Fecha de emisión: ${new Date().toLocaleDateString('es-ES')}`, 14, 34);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(100, 116, 139); // slate-500
+  doc.text("Sede Central • Reporte Operativo de Caja", 14, 28);
+  doc.text(`Generado el: ${fechaHoy}`, 14, 34);
 
-  // --- KPIs / Resumen ---
+  // --- BLOQUE DE RESUMEN (KPIs) ---
+  doc.setDrawColor(226, 232, 240); // slate-200
+  doc.line(14, 40, 196, 40); // Línea divisoria
+
   doc.setFontSize(12);
-  doc.setTextColor(30, 41, 59);
-  doc.text("Resumen de Caja:", 14, 45);
+  doc.setTextColor(15, 23, 42);
+  doc.setFont("helvetica", "bold");
+  doc.text("Resumen General del Periodo:", 14, 50);
 
-  doc.setFontSize(10);
-  doc.setTextColor(16, 185, 129); // Verde Esmeralda
-  doc.text(`+ Ingresos Totales: ${stats.ingresos.toFixed(2)} EUR`, 14, 52);
+  doc.setFontSize(11);
+  doc.setFont("helvetica", "normal");
   
-  doc.setTextColor(239, 68, 68); // Rojo
-  doc.text(`- Gastos Operativos: ${stats.gastos.toFixed(2)} EUR`, 14, 58);
+  // Ingresos
+  doc.setTextColor(16, 185, 129); // emerald-500
+  doc.text(`(+) TOTAL INGRESOS: ${stats.ingresos.toLocaleString('es-ES', { minimumFractionDigits: 2 })} EUR`, 14, 58);
   
-  doc.setTextColor(37, 99, 235); // Azul
-  doc.setFont(undefined, 'bold');
-  doc.text(`= Balance Neto: ${stats.neto.toFixed(2)} EUR`, 14, 66);
-  doc.setFont(undefined, 'normal');
+  // Gastos
+  doc.setTextColor(239, 68, 68); // red-500
+  doc.text(`(-) TOTAL GASTOS: ${stats.gastos.toLocaleString('es-ES', { minimumFractionDigits: 2 })} EUR`, 14, 65);
+  
+  // Neto
+  doc.setTextColor(37, 99, 235); // blue-600
+  doc.setFont("helvetica", "bold");
+  doc.text(`(=) BALANCE NETO: ${stats.neto.toLocaleString('es-ES', { minimumFractionDigits: 2 })} EUR`, 14, 75);
 
-  // --- Preparar datos para la Tabla ---
+  // --- TABLA DE MOVIMIENTOS ---
   const tableColumn = ["ID", "Fecha", "Concepto", "Categoría", "Importe"];
-  const tableRows = [];
+  const tableRows = movimientos.map(mov => [
+    mov.id,
+    mov.fecha,
+    mov.concepto,
+    mov.categoria,
+    { 
+      content: `${mov.tipo === 'ingreso' ? '+' : '-'}${mov.importe.toFixed(2)}€`, 
+      styles: { fontStyle: 'bold', textColor: mov.tipo === 'ingreso' ? [16, 185, 129] : [15, 23, 42] } 
+    }
+  ]);
 
-  movimientos.forEach(mov => {
-    const rowData = [
-      mov.id,
-      mov.fecha,
-      mov.concepto,
-      mov.categoria,
-      `${mov.tipo === 'ingreso' ? '+' : '-'}${mov.importe.toFixed(2)} EUR`
-    ];
-    tableRows.push(rowData);
-  });
-
-  // --- Generar la Tabla Automática ---
   doc.autoTable({
-    startY: 75,
+    startY: 85,
     head: [tableColumn],
     body: tableRows,
-    theme: 'grid',
-    headStyles: { fillColor: [37, 99, 235] }, // Azul GymFlow
-    alternateRowStyles: { fillColor: [248, 250, 252] }, // Gris súper clarito
-    styles: { fontSize: 9 },
+    theme: 'striped',
+    headStyles: { 
+      fillColor: [15, 23, 42], 
+      fontSize: 10, 
+      fontStyle: 'bold', 
+      halign: 'left' 
+    },
+    styles: { 
+      fontSize: 9, 
+      cellPadding: 4,
+      valign: 'middle'
+    },
+    columnStyles: {
+      4: { halign: 'right' } // Importe alineado a la derecha
+    },
+    alternateRowStyles: { fillColor: [248, 250, 252] },
+    margin: { top: 20 }
   });
 
-  // --- Descargar el archivo ---
-  doc.save(`GymFlow_Reporte_${new Date().toLocaleDateString('es-ES').replace(/\//g, '-')}.pdf`);
+  // --- PIE DE PÁGINA ---
+  const pageCount = doc.internal.getNumberOfPages();
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+    doc.setFontSize(8);
+    doc.setTextColor(148, 163, 184);
+    doc.text(`Página ${i} de ${pageCount} - GymFlow Software de Gestión`, 14, doc.internal.pageSize.height - 10);
+  }
+
+  // Guardar archivo
+  doc.save(`GymFlow_Reporte_${fechaHoy.replace(/\//g, '-')}.pdf`);
 };

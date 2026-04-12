@@ -1,67 +1,59 @@
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import React from 'react';
 
-// Exportar CSV (Excel)
-export const exportToCSV = (movimientos) => {
-  const headers = ["ID,Fecha,Concepto,Categoria,Tipo,Importe,Estado\n"];
-  const rows = movimientos.map(m => `${m.id},${m.fecha},"${m.concepto}",${m.categoria},${m.tipo},${m.importe},${m.estado}`);
-  const blob = new Blob([headers + rows.join("\n")], { type: 'text/csv;charset=utf-8;' });
-  const link = document.createElement("a");
-  link.href = URL.createObjectURL(blob);
-  link.download = `Reporte_Finanzas_${new Date().toLocaleDateString('es-ES').replace(/\//g, '-')}.csv`;
-  link.click();
+const StatusBadge = ({ status }) => {
+  const styles = {
+    COMPLETADO: 'bg-emerald-50 text-emerald-600 border-emerald-100',
+    PENDIENTE: 'bg-amber-50 text-amber-600 border-amber-100',
+    CANCELADO: 'bg-red-50 text-red-600 border-red-100'
+  };
+  return (
+    <span className={`px-4 py-2 border rounded-xl text-[10px] lg:text-xs font-black uppercase tracking-widest ${styles[status]}`}>
+      {status}
+    </span>
+  );
 };
 
-// Exportar PDF Profesional
-export const exportToPDF = (movimientos, stats) => {
-  const doc = new jsPDF();
-
-  // Título
-  doc.setFontSize(22);
-  doc.setTextColor(30, 41, 59); // slate-800
-  doc.text("Reporte Financiero GymFlow", 14, 20);
-
-  // Subtítulo
-  doc.setFontSize(10);
-  doc.setTextColor(100, 116, 139); // slate-500
-  doc.text(`Generado el: ${new Date().toLocaleDateString('es-ES')}`, 14, 28);
-
-  // Resumen / KPIs
-  doc.setFontSize(12);
-  doc.setTextColor(30, 41, 59);
-  doc.text("Resumen de Caja:", 14, 42);
-
-  doc.setFontSize(10);
-  doc.setTextColor(16, 185, 129); // Verde
-  doc.text(`(+) Ingresos: ${stats.ingresos.toFixed(2)} EUR`, 14, 49);
-  
-  doc.setTextColor(239, 68, 68); // Rojo
-  doc.text(`(-) Gastos: ${stats.gastos.toFixed(2)} EUR`, 14, 55);
-  
-  doc.setTextColor(37, 99, 235); // Azul
-  doc.setFont("helvetica", "bold");
-  doc.text(`(=) Balance Neto: ${stats.neto.toFixed(2)} EUR`, 14, 63);
-  doc.setFont("helvetica", "normal");
-
-  // Tabla
-  const tableColumn = ["Fecha", "Concepto", "Categoría", "Importe", "Estado"];
-  const tableRows = movimientos.map(mov => [
-    mov.fecha,
-    mov.concepto,
-    mov.categoria,
-    `${mov.tipo === 'ingreso' ? '+' : '-'}${mov.importe.toFixed(2)} EUR`,
-    mov.estado
-  ]);
-
-  doc.autoTable({
-    startY: 75,
-    head: [tableColumn],
-    body: tableRows,
-    theme: 'grid',
-    headStyles: { fillColor: [15, 23, 42] }, // slate-900 oscuro para la cabecera
-    styles: { fontSize: 9, cellPadding: 3 },
-    alternateRowStyles: { fillColor: [248, 250, 252] }, // slate-50
-  });
-
-  doc.save(`GymFlow_Reporte_${new Date().toLocaleDateString('es-ES').replace(/\//g, '-')}.pdf`);
-};
+// 👇 AQUÍ ESTÁ LA LÍNEA CLAVE QUE FALTABA (export default)
+export default function FinanceTable({ movimientos }) {
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-left">
+        <thead>
+          <tr className="border-b border-slate-100 bg-slate-50/50">
+            <th className="px-8 py-6 text-xs font-black text-slate-400 uppercase tracking-widest">ID / Fecha</th>
+            <th className="px-8 py-6 text-xs font-black text-slate-400 uppercase tracking-widest">Concepto</th>
+            <th className="px-8 py-6 text-xs font-black text-slate-400 uppercase tracking-widest">Categoría</th>
+            <th className="px-8 py-6 text-xs font-black text-slate-400 uppercase tracking-widest">Estado</th>
+            <th className="px-8 py-6 text-xs font-black text-slate-400 uppercase tracking-widest text-right">Importe</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-slate-100">
+          {movimientos.map((mov) => (
+            <tr key={mov.id} className="hover:bg-slate-50/80 transition-colors group">
+              <td className="px-8 py-7">
+                <p className="text-base font-black text-slate-800">{mov.fecha}</p>
+                <p className="text-[10px] lg:text-xs text-slate-400 font-bold uppercase mt-1.5 tracking-widest">{mov.id}</p>
+              </td>
+              <td className="px-8 py-7">
+                <p className="text-sm lg:text-base font-black text-slate-700">{mov.concepto}</p>
+              </td>
+              <td className="px-8 py-7">
+                <span className="px-4 py-2 bg-slate-100 text-slate-500 rounded-xl text-[10px] lg:text-xs font-black uppercase tracking-widest border border-slate-200">
+                  {mov.categoria}
+                </span>
+              </td>
+              <td className="px-8 py-7">
+                <StatusBadge status={mov.estado} />
+              </td>
+              <td className="px-8 py-7 text-right">
+                <p className={`text-xl lg:text-2xl font-black tracking-tight ${mov.tipo === 'ingreso' ? 'text-emerald-500' : 'text-slate-800'}`}>
+                  {mov.tipo === 'ingreso' ? '+' : '-'}{mov.importe.toLocaleString('es-ES', { minimumFractionDigits: 2 })}€
+                </p>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
