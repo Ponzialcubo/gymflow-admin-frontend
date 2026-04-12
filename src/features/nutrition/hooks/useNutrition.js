@@ -171,8 +171,8 @@ export const useNutrition = () => {
   };
 
   return {
-    socios, form, setForm, recientes, mensaje, loading,
-    kcalCalculadas, totalesActuales, diferenciaKcal, handleSubmit,
-    comidas, setComidas, catalogoAlimentos
-  };
+  socios, form, setForm, recientes, mensaje, loading,
+  kcalCalculadas, totalesActuales, diferenciaKcal, handleSubmit,
+  comidas, setComidas, catalogoAlimentos
+};
 };

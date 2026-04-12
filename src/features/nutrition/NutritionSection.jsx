@@ -18,19 +18,20 @@ export default function NutritionSection() {
   const [slideOverState, setSlideOverState] = useState({ isOpen: false, comidaId: null });
 
   const handleAddFoodToMeal = (alimento, cantidad) => {
-    setComidas(prevComidas => 
-      prevComidas.map(comida => {
-        if (comida.id_temporal === slideOverState.comidaId) {
-          return {
-            ...comida,
-            alimentos: [...comida.alimentos, { ...alimento, cantidad_g: cantidad }]
-          };
-        }
-        return comida;
-      })
-    );
-    setSlideOverState({ isOpen: false, comidaId: null }); // Cerramos tras añadir
-  };
+  setComidas(prevComidas => {
+    return prevComidas.map(comida => {
+      if (comida.id_temporal === slideOverState.comidaId) {
+        // Creamos una nueva instancia de la comida y del array de alimentos
+        return {
+          ...comida,
+          alimentos: [...comida.alimentos, { ...alimento, cantidad_g: cantidad }]
+        };
+      }
+      return comida;
+    });
+  });
+  setSlideOverState({ isOpen: false, comidaId: null });
+};
 
   return (
     <div className="w-full max-w-6xl mx-auto px-4 pb-20 animate-in fade-in duration-700 relative">
