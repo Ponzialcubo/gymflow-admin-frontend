@@ -1,31 +1,119 @@
+import React, { useState, useMemo } from 'react';
+
 export default function TrainingForm({ 
   socios, ejercicios, form, setForm, diasSemana, 
   diasSeleccionados, toggleDia, loading, onSubmit 
 }) {
+  
+  // 🔍 ESTADOS PARA LOS BUSCADORES
+  const [socioSearch, setSocioSearch] = useState("");
+  const [isSocioOpen, setIsSocioOpen] = useState(false);
+  
+  const [ejercicioSearch, setEjercicioSearch] = useState("");
+  const [isEjercicioOpen, setIsEjercicioOpen] = useState(false);
+
+  // 🧠 FILTRADO DE SOCIOS (Se activa al escribir 2 letras)
+  const filteredSocios = useMemo(() => {
+    if (socioSearch.length < 2) return [];
+    return socios.filter(s => 
+      s.nombre.toLowerCase().includes(socioSearch.toLowerCase())
+    ).slice(0, 5);
+  }, [socios, socioSearch]);
+
+  // 🧠 FILTRADO DE EJERCICIOS
+  const filteredEjercicios = useMemo(() => {
+    if (ejercicioSearch.length < 2) return [];
+    return ejercicios.filter(e => 
+      e.nombre.toLowerCase().includes(ejercicioSearch.toLowerCase()) ||
+      e.grupo_muscular.toLowerCase().includes(ejercicioSearch.toLowerCase())
+    ).slice(0, 5);
+  }, [ejercicios, ejercicioSearch]);
+
   return (
     <form onSubmit={onSubmit} className="p-8 md:p-12">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+        
         <div className="space-y-8">
-          <div className="space-y-3">
-            <label className="text-[10px] uppercase font-black text-blue-600 tracking-widest ml-1">Socio</label>
-            <select 
-              className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none font-bold text-slate-700 focus:border-blue-500"
-              value={form.id_usuario}
-              onChange={e => setForm({...form, id_usuario: e.target.value})}
-            >
-              {socios.map(s => <option key={s.id} value={s.id}>{s.nombre.toUpperCase()}</option>)}
-            </select>
+          
+          {/* 🔍 BUSCADOR DE SOCIO */}
+          <div className="space-y-3 relative">
+            <label className="text-[10px] uppercase font-black text-blue-600 tracking-widest ml-1">Socio / Atleta</label>
+            <div className="relative">
+              <input 
+                type="text"
+                placeholder="Escribe nombre del socio..."
+                className="w-full p-5 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none font-bold text-slate-700 focus:border-blue-500 transition-all"
+                value={socioSearch}
+                onChange={(e) => {
+                  setSocioSearch(e.target.value);
+                  setIsSocioOpen(true);
+                }}
+                onFocus={() => setIsSocioOpen(true)}
+              />
+              <span className="absolute right-5 top-1/2 -translate-y-1/2 opacity-30">👥</span>
+            </div>
+
+            {isSocioOpen && socioSearch.length >= 2 && (
+              <div className="absolute z-50 w-full mt-2 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden animate-in fade-in slide-in-from-top-2">
+                {filteredSocios.length > 0 ? (
+                  filteredSocios.map(s => (
+                    <button
+                      key={s.id}
+                      type="button"
+                      className="w-full p-4 text-left hover:bg-blue-50 transition-colors border-b border-slate-50 last:border-none font-bold text-slate-700 text-sm uppercase"
+                      onClick={() => {
+                        setForm({...form, id_usuario: s.id});
+                        setSocioSearch(s.nombre.toUpperCase());
+                        setIsSocioOpen(false);
+                      }}
+                    >
+                      {s.nombre}
+                    </button>
+                  ))
+                ) : (
+                  <div className="p-4 text-center text-slate-400 font-bold text-xs italic">No se encuentra el socio</div>
+                )}
+              </div>
+            )}
           </div>
 
-          <div className="space-y-3">
+          {/* 🔍 BUSCADOR DE EJERCICIO */}
+          <div className="space-y-3 relative">
             <label className="text-[10px] uppercase font-black text-blue-600 tracking-widest ml-1">Ejercicio</label>
-            <select 
-              className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none font-bold text-slate-700 focus:border-blue-500"
-              value={form.id_ejercicio}
-              onChange={e => setForm({...form, id_ejercicio: e.target.value})}
-            >
-              {ejercicios.map(e => <option key={e.id} value={e.id}>{e.nombre} ({e.grupo_muscular})</option>)}
-            </select>
+            <div className="relative">
+              <input 
+                type="text"
+                placeholder="Buscar ejercicio (ej: Press, Sentadilla...)"
+                className="w-full p-5 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none font-bold text-slate-700 focus:border-blue-500 transition-all"
+                value={ejercicioSearch}
+                onChange={(e) => {
+                  setEjercicioSearch(e.target.value);
+                  setIsEjercicioOpen(true);
+                }}
+                onFocus={() => setIsEjercicioOpen(true)}
+              />
+              <span className="absolute right-5 top-1/2 -translate-y-1/2 opacity-30">💪</span>
+            </div>
+
+            {isEjercicioOpen && ejercicioSearch.length >= 2 && (
+              <div className="absolute z-40 w-full mt-2 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden animate-in fade-in slide-in-from-top-2">
+                {filteredEjercicios.map(e => (
+                  <button
+                    key={e.id}
+                    type="button"
+                    className="w-full p-4 text-left hover:bg-blue-50 transition-colors border-b border-slate-50 last:border-none flex justify-between items-center"
+                    onClick={() => {
+                      setForm({...form, id_ejercicio: e.id});
+                      setEjercicioSearch(e.nombre);
+                      setIsEjercicioOpen(false);
+                    }}
+                  >
+                    <span className="font-bold text-slate-700">{e.nombre}</span>
+                    <span className="text-[9px] bg-slate-100 px-2 py-1 rounded-md font-black text-slate-400 uppercase">{e.grupo_muscular}</span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-6">
@@ -34,6 +122,7 @@ export default function TrainingForm({
           </div>
         </div>
 
+        {/* COLUMNA DERECHA: DÍAS Y BOTÓN */}
         <div className="flex flex-col justify-between space-y-8">
           <div className="space-y-4">
             <label className="text-[10px] uppercase font-black text-blue-600 tracking-widest ml-1">Días de entrenamiento</label>
@@ -43,7 +132,6 @@ export default function TrainingForm({
                   key={dia}
                   type="button"
                   onClick={() => toggleDia(dia)}
-                  // --- 👇 AQUÍ ESTÁ EL CAMBIO: text-xs lg:text-sm y tracking-widest ---
                   className={`py-4 rounded-xl text-xs lg:text-sm tracking-widest font-black transition-all border-2 ${
                     diasSeleccionados.includes(dia) 
                     ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-600/30' 
@@ -58,8 +146,10 @@ export default function TrainingForm({
 
           <button 
             type="submit"
-            disabled={loading}
-            className={`w-full py-5 bg-blue-600 text-white font-black rounded-2xl shadow-xl shadow-blue-600/20 hover:bg-blue-700 hover:-translate-y-1 transition-all uppercase tracking-widest text-md active:scale-95 ${loading ? 'opacity-50 pointer-events-none' : ''}`}
+            disabled={loading || !form.id_usuario || !form.id_ejercicio}
+            className={`w-full py-5 bg-blue-600 text-white font-black rounded-2xl shadow-xl shadow-blue-600/20 hover:bg-blue-700 hover:-translate-y-1 transition-all uppercase tracking-widest text-md active:scale-95 ${
+              (loading || !form.id_usuario || !form.id_ejercicio) ? 'opacity-50 pointer-events-none grayscale' : ''
+            }`}
           >
             {loading ? 'Sincronizando...' : 'Confirmar Planificación'}
           </button>
