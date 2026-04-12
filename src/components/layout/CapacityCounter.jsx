@@ -36,52 +36,48 @@ export default function CapacityCounter() {
   const percentage = Math.min((count / maxCapacity) * 100, 100);
 
   return (
-    <div className="bg-slate-900 p-6 rounded-[2.5rem] shadow-2xl border border-slate-800 flex items-center gap-8 min-w-[320px] transition-all hover:scale-[1.02] relative overflow-hidden group">
+    <div className="bg-slate-900 p-4 px-5 rounded-[2rem] shadow-xl border border-slate-800 flex items-center gap-5 min-w-[280px] transition-all hover:scale-[1.01] relative overflow-hidden group">
       
-      {/* Glow decorativo de fondo */}
-      <div className="absolute -right-10 -top-10 w-32 h-32 bg-blue-600/10 blur-[50px] rounded-full pointer-events-none"></div>
+      {/* Glow decorativo (más sutil) */}
+      <div className="absolute -right-5 -top-5 w-24 h-24 bg-blue-600/10 blur-[40px] rounded-full pointer-events-none"></div>
 
-      {/* Sección Izquierda: Icono y Estado */}
-      <div className="flex flex-col items-center gap-3">
+      {/* Sección Izquierda: Icono y Estado (Escalado hacia abajo) */}
+      <div className="flex flex-col items-center gap-2">
         <div className="relative">
-          <div className="w-12 h-12 bg-slate-800 rounded-2xl flex items-center justify-center text-xl shadow-inner border border-slate-700">
+          <div className="w-10 h-10 bg-slate-800 rounded-xl flex items-center justify-center text-lg shadow-inner border border-slate-700">
             👥
           </div>
-          {/* Indicador LIVE con pulso suave */}
-          <span className="absolute -top-1 -right-1 flex h-3 w-3">
+          <span className="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-3 w-3 bg-blue-500 border border-slate-900"></span>
+            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-blue-500 border border-slate-900"></span>
           </span>
         </div>
-        <span className="text-[10px] font-black text-blue-400 uppercase tracking-[0.2em] animate-pulse">Live</span>
+        <span className="text-[9px] font-black text-blue-400 uppercase tracking-[0.2em]">Live</span>
       </div>
 
       {/* Sección Derecha: Datos y Progreso */}
-      <div className="flex-1 space-y-3">
+      <div className="flex-1 space-y-2">
         <div className="flex items-end justify-between">
           <div className="flex flex-col">
-            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Ocupación Actual</span>
+            <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Ocupación</span>
             <div className="flex items-baseline gap-1">
-              <span className="text-4xl font-black text-white tracking-tighter tabular-nums">
+              <span className="text-3xl font-black text-white tracking-tighter tabular-nums">
                 {count}
               </span>
-              <span className="text-sm font-bold text-slate-500">/ {maxCapacity}</span>
+              <span className="text-xs font-bold text-slate-500">/ {maxCapacity}</span>
             </div>
           </div>
-          
-          {/* Porcentaje numérico */}
-          <span className="text-xs font-black text-slate-400 mb-1">{Math.round(percentage)}%</span>
+          <span className="text-[10px] font-black text-slate-400 mb-0.5">{Math.round(percentage)}%</span>
         </div>
 
-        {/* Barra de progreso tecnológica */}
-        <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden p-[1px]">
+        {/* Barra de progreso (un poco más delgada) */}
+        <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden p-[0.5px]">
           <div 
-            className="h-full bg-gradient-to-r from-blue-600 to-blue-400 rounded-full transition-all duration-1000 ease-out shadow-[0_0_15px_rgba(59,130,246,0.5)]"
+            className="h-full bg-gradient-to-r from-blue-600 to-blue-400 rounded-full transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(59,130,246,0.4)]"
             style={{ width: `${percentage}%` }}
           />
         </div>
       </div>
-      
     </div>
   );
 }
