@@ -22,9 +22,6 @@ export default function PaymentsHeader({ onOpenModal, onExportPDF }) {
               Online
             </span>
           </div>
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.1em] mt-1">
-            Núcleo GymFlow • Conexión Estable
-          </p>
         </div>
       </div>
 
@@ -35,7 +32,7 @@ export default function PaymentsHeader({ onOpenModal, onExportPDF }) {
         <button 
 
           onClick={onExportPDF}
-          className="flex-1 lg:flex-none flex items-center justify-center gap-3 px-8 py-5 bg-white border-2 border-slate-100 text-slate-600 rounded-[1.5rem] font-black text-[11px] uppercase tracking-widest hover:bg-slate-50 hover:border-slate-300 hover:text-slate-900 transition-all active:scale-95"
+          className="flex-1 lg:flex-none flex items-center justify-center gap-3 px-8 py-5 bg-white border-2 border-slate-100 text-slate-600 rounded-[1.5rem] font-black text-[12px] uppercase tracking-widest hover:bg-slate-50 hover:border-slate-300 hover:text-slate-900 transition-all active:scale-95"
         >
           <span className="text-xl">📄</span>
           Exportar Reporte
@@ -44,7 +41,7 @@ export default function PaymentsHeader({ onOpenModal, onExportPDF }) {
         {/* Nueva Suscripción: El protagonista (Diseño XL con Sombra Pro) */}
         <button 
           onClick={onOpenModal}
-          className="flex-1 lg:flex-none flex items-center justify-center gap-4 px-10 py-5 bg-blue-600 text-white rounded-[1.5rem] font-black text-[11px] uppercase tracking-[0.15em] shadow-2xl shadow-blue-400/40 hover:bg-blue-700 hover:-translate-y-1 transition-all active:scale-95"
+          className="flex-1 lg:flex-none flex items-center justify-center gap-4 px-10 py-5 bg-blue-600 text-white rounded-[1.5rem] font-black text-[13px] uppercase tracking-[0.15em] shadow-2xl shadow-blue-400/40 hover:bg-blue-700 hover:-translate-y-1 transition-all active:scale-95"
         >
           <span className="text-2xl leading-none">+</span>
           Nueva Suscripción
