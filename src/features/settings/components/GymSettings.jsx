@@ -1,5 +1,5 @@
 import React from 'react';
-import { useSettings } from './hooks/useSettings'; // Ajusta la ruta
+import { useSettings } from '../hooks/useSettings'; 
 
 export default function GymSettings() {
   // Nos traemos toda la artillería pesada del Hook
@@ -133,7 +133,13 @@ export default function GymSettings() {
           </button>
         </div>
       </div>
-
+          {mensaje && mensaje.texto && (
+        <div className={`fixed bottom-10 right-10 p-5 rounded-2xl shadow-2xl border font-black text-[10px] uppercase tracking-widest z-50 animate-in slide-in-from-bottom-5 ${
+          mensaje.tipo === 'success' ? 'bg-emerald-500 text-white border-emerald-400' : 'bg-red-500 text-white border-red-400'
+        }`}>
+          {mensaje.texto}
+        </div>
+      )}
     </form>
   );
 }

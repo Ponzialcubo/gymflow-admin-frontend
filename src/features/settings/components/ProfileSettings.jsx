@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useSettings } from './hooks/useSettings'; // Ajusta la ruta correcta
+import { useSettings } from '../hooks/useSettings'; // Ajusta la ruta correcta
 
 export default function ProfileSettings() {
   // 1. Extraemos todo lo necesario del Hook maestro

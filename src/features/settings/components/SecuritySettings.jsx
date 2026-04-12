@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useSettings } from './hooks/useSettings'; // Ajusta la ruta si es necesario
+import { useSettings } from '../hooks/useSettings'; // Ajusta la ruta si es necesario
 
 export default function SecuritySettings() {
   const { handleUpdatePassword } = useSettings();
