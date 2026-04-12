@@ -6,7 +6,7 @@ export const useClientDetail = (socioId, onBack) => {
   const [rutinas, setRutinas] = useState([]);
   const [mediciones, setMediciones] = useState([]);
   const [ejerciciosCatalogo, setEjerciciosCatalogo] = useState([]); 
-  const [catalogoAlimentos, setCatalogoAlimentos] = useState([]); // <-- NUEVO
+  const [catalogoAlimentos, setCatalogoAlimentos] = useState([]); 
   const [loading, setLoading] = useState(true);
 
   // Modales
@@ -14,12 +14,12 @@ export const useClientDetail = (socioId, onBack) => {
   const [isEditModalOpen, setEditModalOpen] = useState(false);
   const [isDietaModalOpen, setIsDietaModalOpen] = useState(false);
   const [isRutinaModalOpen, setIsRutinaModalOpen] = useState(false);
+  const [isViewDietModalOpen, setIsViewDietModalOpen] = useState(false); // <--- NUEVO: Estado para el modal de vista
 
   // Estados de formularios
   const [newMedicion, setNewMedicion] = useState({ peso_kg: '', altura_cm: '', imc: '', grasa_porcentaje: '', notas_monitor: '' });
   const [editData, setEditData] = useState({ nombre: '', email: '' });
   
-  // 🍎 Nutrición: Estado del Formulario Superior (Metas)
   const [newDieta, setNewDieta] = useState({ 
     nombre_dieta: 'Mantenimiento Base', 
     calorias_objetivo: 2500, 
@@ -28,7 +28,6 @@ export const useClientDetail = (socioId, onBack) => {
     grasas: 70 
   });
 
-  // 🍎 Nutrición: Estado de los Bloques de Comidas (Lienzo)
   const [comidas, setComidas] = useState([
     { id_temporal: 'c1', nombre: 'Desayuno', alimentos: [] },
     { id_temporal: 'c2', nombre: 'Comida', alimentos: [] },
@@ -44,19 +43,24 @@ export const useClientDetail = (socioId, onBack) => {
     try {
       const [resUser, resDieta, resSub, resRutinas, resMediciones, resEjercicios, resAlimentos] = await Promise.all([
         supabase.from('usuarios').select('*').eq('id', socioId).single(),
-        supabase.from('dietas').select('*').eq('id_usuario', socioId).eq('activa', true).maybeSingle(),
+        // MODIFICADO ABAJO: Select anidado para traer comidas y alimentos <--- IMPORTANTE
+        supabase.from('dietas')
+          .select('*, comidas_dieta(id, momento_dia, comida_alimentos(cantidad_g, alimentos_catalogo(nombre, categoria)))')
+          .eq('id_usuario', socioId)
+          .eq('activa', true)
+          .maybeSingle(),
         supabase.from('suscripciones').select('*').eq('id_usuario', socioId).eq('estado', 'activo').maybeSingle(),
         supabase.from('rutinas').select('id, dia_semana, series, repeticiones, fecha_asignacion, ejercicios(nombre, grupo_muscular)').eq('id_usuario', socioId).order('fecha_asignacion', { ascending: false }),
         supabase.from('mediciones').select('*').eq('id_usuario', socioId).order('fecha_medicion', { ascending: false }),
         supabase.from('ejercicios').select('*').order('nombre'),
-        supabase.from('alimentos_catalogo').select('*').eq('activo', true).order('nombre') // <-- CARGAMOS ALIMENTOS
+        supabase.from('alimentos_catalogo').select('*').eq('activo', true).order('nombre')
       ]);
 
       setPerfil({ usuario: resUser.data, dieta: resDieta.data, suscripcion: resSub.data });
       setRutinas(resRutinas.data || []);
       setMediciones(resMediciones.data || []);
       setEjerciciosCatalogo(resEjercicios.data || []);
-      setCatalogoAlimentos(resAlimentos.data || []); // <-- GUARDAMOS ALIMENTOS
+      setCatalogoAlimentos(resAlimentos.data || []);
       
       if (resUser.data) setEditData({ nombre: resUser.data.nombre, email: resUser.data.email });
     } catch (err) {
@@ -211,8 +215,9 @@ export const useClientDetail = (socioId, onBack) => {
     perfil, rutinas, mediciones, ejerciciosCatalogo, catalogoAlimentos, loading,
     isMedicionModalOpen, setIsMedicionModalOpen, isEditModalOpen, setEditModalOpen,
     isDietaModalOpen, setIsDietaModalOpen, isRutinaModalOpen, setIsRutinaModalOpen,
+    isViewDietModalOpen, setIsViewDietModalOpen, // <--- NUEVO: Exportamos el estado
     newMedicion, setNewMedicion, editData, setEditData, newDieta, setNewDieta,
-    comidas, setComidas, totalesActuales, diferenciaKcal, // <-- EXPORTAMOS PARA LA UI
+    comidas, setComidas, totalesActuales, diferenciaKcal, 
     newRutina, setNewRutina, handleBaja, handleEditSocio, handleAddMedicion, handleAddDieta, handleAddRutina
   };
 };
