@@ -17,22 +17,31 @@ export default function SettingsSection() {
   };
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 pb-20 animate-in fade-in duration-700">
+    // Aumentamos el padding lateral y el ancho máximo para dar aire
+    <div className="w-full max-w-[1600px] mx-auto px-6 lg:px-16 py-10 animate-in fade-in duration-700">
       
-      {/* CUADRÍCULA PRINCIPAL
-          Hemos eliminado el header duplicado para que respete el Header Global de la app.
-          El mt-4 le da un pequeño respiro respecto al título de arriba.
+      {/* TÍTULO DE LA SECCIÓN (Para llenar la parte superior) */}
+      <div className="mb-12">
+        <h2 className="text-4xl font-black text-slate-800 tracking-tighter">Configuración del Sistema</h2>
+        <p className="text-sm font-bold text-slate-400 uppercase tracking-[0.3em] mt-2">
+          Gestiona tu identidad, los parámetros del centro y la seguridad
+        </p>
+      </div>
+
+      {/* CAMBIO CLAVE: 
+        En lugar de usar col-spans variables, fijamos el sidebar a 320px 
+        y dejamos que el contenido ocupe todo el espacio restante (1fr)
       */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 xl:grid-cols-4 gap-10 mt-4">
+      <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-16 items-start">
         
-        {/* MENÚ LATERAL */}
-        <div className="lg:col-span-2 xl:col-span-1 space-y-4">
+        {/* MENÚ LATERAL (Sidebar) */}
+        <div className="flex flex-col gap-4">
           <button 
             onClick={() => handleTabChange('perfil')}
-            className={`w-full flex items-center gap-6 px-8 py-6 rounded-[2rem] font-black text-sm uppercase tracking-widest transition-all duration-300 ${
+            className={`w-full flex items-center gap-6 px-10 py-7 rounded-[2.5rem] font-black text-xs uppercase tracking-widest transition-all duration-500 ${
               activeTab === 'perfil' 
-                ? 'bg-slate-900 text-white shadow-2xl shadow-slate-900/20 scale-105' 
-                : 'bg-white text-slate-500 hover:bg-slate-50 border border-slate-100 hover:scale-105'
+                ? 'bg-slate-900 text-white shadow-2xl shadow-slate-900/40 translate-x-4 scale-105' 
+                : 'bg-white text-slate-400 hover:bg-slate-50 border border-slate-100 hover:translate-x-2'
             }`}
           >
             <span className="text-3xl">🧑‍💼</span> Mi Perfil
@@ -40,10 +49,10 @@ export default function SettingsSection() {
 
           <button 
             onClick={() => handleTabChange('centro')}
-            className={`w-full flex items-center gap-6 px-8 py-6 rounded-[2rem] font-black text-sm uppercase tracking-widest transition-all duration-300 ${
+            className={`w-full flex items-center gap-6 px-10 py-7 rounded-[2.5rem] font-black text-xs uppercase tracking-widest transition-all duration-500 ${
               activeTab === 'centro' 
-                ? 'bg-slate-900 text-white shadow-2xl shadow-slate-900/20 scale-105' 
-                : 'bg-white text-slate-500 hover:bg-slate-50 border border-slate-100 hover:scale-105'
+                ? 'bg-slate-900 text-white shadow-2xl shadow-slate-900/40 translate-x-4 scale-105' 
+                : 'bg-white text-slate-400 hover:bg-slate-50 border border-slate-100 hover:translate-x-2'
             }`}
           >
             <span className="text-3xl">🏢</span> Centro
@@ -51,10 +60,10 @@ export default function SettingsSection() {
 
           <button 
             onClick={() => handleTabChange('equipo')}
-            className={`w-full flex items-center gap-6 px-8 py-6 rounded-[2rem] font-black text-sm uppercase tracking-widest transition-all duration-300 ${
+            className={`w-full flex items-center gap-6 px-10 py-7 rounded-[2.5rem] font-black text-xs uppercase tracking-widest transition-all duration-500 ${
               activeTab === 'equipo' 
-                ? 'bg-slate-900 text-white shadow-2xl shadow-slate-900/20 scale-105' 
-                : 'bg-white text-slate-500 hover:bg-slate-50 border border-slate-100 hover:scale-105'
+                ? 'bg-slate-900 text-white shadow-2xl shadow-slate-900/40 translate-x-4 scale-105' 
+                : 'bg-white text-slate-400 hover:bg-slate-50 border border-slate-100 hover:translate-x-2'
             }`}
           >
             <span className="text-3xl">🏅</span> Equipo
@@ -62,22 +71,24 @@ export default function SettingsSection() {
 
           <button 
             onClick={() => handleTabChange('seguridad')}
-            className={`w-full flex items-center gap-6 px-8 py-6 rounded-[2rem] font-black text-sm uppercase tracking-widest transition-all duration-300 ${
+            className={`w-full flex items-center gap-6 px-10 py-7 rounded-[2.5rem] font-black text-xs uppercase tracking-widest transition-all duration-500 ${
               activeTab === 'seguridad' 
-                ? 'bg-slate-900 text-white shadow-2xl shadow-slate-900/20 scale-105' 
-                : 'bg-white text-slate-500 hover:bg-slate-50 border border-slate-100 hover:scale-105'
+                ? 'bg-slate-900 text-white shadow-2xl shadow-slate-900/40 translate-x-4 scale-105' 
+                : 'bg-white text-slate-400 hover:bg-slate-50 border border-slate-100 hover:translate-x-2'
             }`}
           >
             <span className="text-3xl">🔒</span> Seguridad
           </button>
         </div>
 
-        {/* ÁREA DE CONTENIDO */}
-        <div className="lg:col-span-3 xl:col-span-3 relative">
-          {activeTab === 'perfil' && <ProfileSettings />}
-          {activeTab === 'centro' && <GymSettings />}
-          {activeTab === 'equipo' && <StaffSettings />} 
-          {activeTab === 'seguridad' && <SecuritySettings />}
+        {/* ÁREA DE CONTENIDO (Ahora mucho más amplia) */}
+        <div className="bg-white rounded-[4rem] p-12 lg:p-20 shadow-xl shadow-slate-200/30 border border-slate-100 min-h-[600px] relative">
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+            {activeTab === 'perfil' && <ProfileSettings />}
+            {activeTab === 'centro' && <GymSettings />}
+            {activeTab === 'equipo' && <StaffSettings />} 
+            {activeTab === 'seguridad' && <SecuritySettings />}
+          </div>
         </div>
 
       </div>
