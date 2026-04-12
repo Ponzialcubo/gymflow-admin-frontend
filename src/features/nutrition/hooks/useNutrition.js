@@ -72,29 +72,27 @@ export const useNutrition = () => {
   const diferenciaKcal = Math.abs((totalesActuales?.kcal || 0) - form.calorias_objetivo);
 
   const handleSubmit = async (e) => {
-    if (e) e.preventDefault();
-    if (!form.id_usuario) return setMensaje({ texto: '⚠️ Selecciona un socio', tipo: 'error' });
+  if (e) e.preventDefault();
+  if (!form.id_usuario) return setMensaje({ texto: '⚠️ Selecciona un socio', tipo: 'error' });
 
-    setLoading(true);
-    try {
-      // Desactivar anteriores
-      await supabase.from('dietas').update({ activa: false }).eq('id_usuario', form.id_usuario);
+  setLoading(true);
+  try {
+    // 1. Insertar la Dieta
+    const { data: dietaData, error: errorDieta } = await supabase
+      .from('dietas')
+      .insert([{
+        id_usuario: form.id_usuario,
+        nombre_dieta: form.nombre_dieta,
+        // AQUÍ ESTÁ EL TRUCO: Guardamos los totales reales, no el objetivo del form
+        calorias_objetivo: totalesActuales.kcal, // En vez de parseInt(form.calorias_objetivo)
+        proteinas: totalesActuales.proteinas,    // En vez de parseInt(form.proteinas)
+        carbohidratos: totalesActuales.carbohidratos,
+        grasas: totalesActuales.grasas,
+        activa: true
+      }])
+      .select('id').single();
 
-      // 1. Insertar Dieta
-      const { data: dietaData, error: errorDieta } = await supabase
-        .from('dietas')
-        .insert([{
-          id_usuario: form.id_usuario,
-          nombre_dieta: form.nombre_dieta,
-          calorias_objetivo: parseInt(form.calorias_objetivo),
-          proteinas: parseInt(form.proteinas),
-          carbohidratos: parseInt(form.carbohidratos),
-          grasas: parseInt(form.grasas),
-          activa: true
-        }])
-        .select('id').single();
-
-      if (errorDieta) throw errorDieta;
+    if (errorDieta) throw errorDieta;
 
       // 2. Insertar Comidas y Alimentos
       for (const comida of comidas) {
