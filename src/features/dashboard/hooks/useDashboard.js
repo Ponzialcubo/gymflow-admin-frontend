@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../../config/supabase'; 
 
 export const useDashboard = () => {
-  // Inicializamos stats con la estructura que espera tu StatsGrid
   const [stats, setStats] = useState({ 
     sociosActivos: 0, 
     totalEjercicios: 0, 
@@ -18,28 +17,28 @@ export const useDashboard = () => {
       setLoading(true);
       
       const hoy = new Date();
-      
-      // Fecha límite para las alertas de caducidad (7 días)
       const enSieteDias = new Date(hoy);
       enSieteDias.setDate(hoy.getDate() + 7);
 
-      // Ejecutamos TODAS las consultas a Supabase en paralelo para que sea súper rápido
       const [
         { count: countUsuarios, error: errUsuarios },
         { count: countEjercicios, error: errEjercicios },
         { data: suscripcionesData, error: errSuscripciones },
         { data: clasesData, error: errClases }
       ] = await Promise.all([
-        // 1. Contamos usuarios activos (socios)
+        // 1. Usuarios reales con rol socio
         supabase.from('usuarios').select('*', { count: 'exact', head: true }).eq('rol', 'socio').eq('activo', true),
         
-        // 2. Contamos total de ejercicios
+        // 2. Total de ejercicios en la base
         supabase.from('ejercicios').select('*', { count: 'exact', head: true }),
         
-        // 3. Traemos las suscripciones activas para sacar ingresos y alertas
-        supabase.from('suscripciones').select('id, precio, tipo_plan, fecha_fin, usuarios(nombre)').eq('estado', 'activo'),
+        // 3. Traemos suscripciones 'activas' (para comunidad) Y 'recibos' (para dinero)
+        // Quitamos el .eq('estado', 'activo') para traer ambos tipos
+        supabase.from('suscripciones')
+          .select('id, precio, tipo_plan, estado, fecha_fin, usuarios(nombre)')
+          .in('estado', ['activo', 'recibo_generado', 'recibo']),
         
-        // 4. Traemos las clases colectivas
+        // 4. Clases del día
         supabase.from('clases_colectivas').select('*, reservas_clases(count)')
       ]);
 
@@ -48,52 +47,53 @@ export const useDashboard = () => {
       if (errSuscripciones) throw errSuscripciones;
       if (errClases) throw errClases;
 
-      // --- PROCESAMIENTO DE DATOS (Lo que antes hacía tu Node) ---
+      // --- 🧠 LÓGICA DE FILTRADO PARA EVITAR DUPLICADOS ---
 
-      const listaSuscripciones = suscripcionesData || [];
+      const todasLasSubs = suscripcionesData || [];
       
-      // A. Calcular ingresos totales
-      const ingresos = listaSuscripciones.reduce((acc, curr) => acc + (parseFloat(curr.precio) || 0), 0);
+      // A. INGRESOS REALES: Sumamos solo los registros que son "recibos" (dinero cobrado)
+      const ingresos = todasLasSubs
+        .filter(s => s.estado === 'recibo_generado' || s.estado === 'recibo')
+        .reduce((acc, curr) => acc + (parseFloat(curr.precio) || 0), 0);
 
-      // B. Agrupar por tipo de plan
-      const desglose = listaSuscripciones.reduce((acc, curr) => {
+      // B. COMUNIDAD ACTIVA: Filtramos solo los que tienen el contrato 'activo'
+      const listaActivos = todasLasSubs.filter(s => s.estado === 'activo');
+
+      // C. DESGLOSE DE PLANES: Solo sobre los activos
+      const desglose = listaActivos.reduce((acc, curr) => {
         const plan = curr.tipo_plan || 'Basic';
         acc[plan] = (acc[plan] || 0) + 1;
         return acc;
       }, {});
 
-      // C. Sacar las alertas (Suscripciones que caducan en los próximos 7 días)
-      const alertas = listaSuscripciones.filter(sub => {
+      // D. ALERTAS DE CADUCIDAD: Solo sobre los activos
+      const alertas = listaActivos.filter(sub => {
         const fechaFin = new Date(sub.fecha_fin);
         return fechaFin >= hoy && fechaFin <= enSieteDias;
       });
 
-      // Guardamos las estadísticas calculadas
+      // Actualizamos las estadísticas con los filtros aplicados
       setStats({
-        sociosActivos: countUsuarios || 0,
+        sociosActivos: listaActivos.length, // Usamos el conteo de nuestra lista filtrada
         totalEjercicios: countEjercicios || 0,
-        ingresosMensuales: ingresos.toFixed(2),
+        ingresosMensuales: ingresos.toFixed(2), // Ahora mostrará los 49.99€ reales
         desglosePlanes: desglose,
         alertasCaducidad: alertas
       });
 
-      // D. Procesar las Clases de Hoy
+      // E. Procesar las Clases de Hoy (igual que antes)
       const fechaHoyStr = hoy.toISOString().split('T')[0]; 
-      
-      const clasesConInscritos = (clasesData || []).map(c => ({
-        ...c,
-        inscritos: c.reservas_clases[0]?.count || 0
-      }));
-
-      const clasesDeHoy = clasesConInscritos.filter(clase => {
-        if (!clase.horario) return true; 
-        return clase.horario.startsWith(fechaHoyStr);
-      });
+      const clasesDeHoy = (clasesData || [])
+        .map(c => ({
+          ...c,
+          inscritos: c.reservas_clases[0]?.count || 0
+        }))
+        .filter(clase => clase.horario && clase.horario.startsWith(fechaHoyStr));
 
       setClases(clasesDeHoy);
 
     } catch (err) {
-      console.error("Error cargando el Dashboard desde Supabase:", err.message);
+      console.error("Error en Dashboard:", err.message);
     } finally {
       setLoading(false);
     }

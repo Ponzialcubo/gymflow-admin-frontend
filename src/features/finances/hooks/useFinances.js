@@ -29,16 +29,22 @@ export const useFinances = () => {
       const subscriptionsData = data || [];
       setSubscriptions(subscriptionsData);
 
-      // --- CÁLCULO DE MÉTRICAS (Lógica de Negocio) ---
+      // --- CÁLCULO DE MÉTRICAS ---
       
-      // 1. Ingresos totales (sumatorio de precios)
-      const total = subscriptionsData.reduce((acc, curr) => acc + (parseFloat(curr.precio) || 0), 0);
+      // 1. Ingresos totales (SÓLO sumamos lo cobrado: recibos y ajustes)
+      const total = subscriptionsData
+        .filter(s => s.estado === 'recibo_generado' || s.estado === 'recibo')
+        .reduce((acc, curr) => acc + (parseFloat(curr.precio) || 0), 0);
       
-      // 2. Conteo de suscripciones activas
+      // 2. Conteo de suscripciones activas (Gente que tiene permiso de entrada)
       const activos = subscriptionsData.filter(s => s.estado === 'activo').length;
       
-      // 3. Ticket medio (Promedio de ingreso por suscripción activa)
-      const promedio = activos > 0 ? (total / activos).toFixed(2) : 0;
+      // 3. Ticket medio (Basado en lo que valen tus planes activos)
+      const totalActivos = subscriptionsData
+        .filter(s => s.estado === 'activo')
+        .reduce((acc, curr) => acc + (parseFloat(curr.precio) || 0), 0);
+
+      const promedio = activos > 0 ? (totalActivos / activos).toFixed(2) : 0;
 
       setStats({ total, activos, promedio });
 
