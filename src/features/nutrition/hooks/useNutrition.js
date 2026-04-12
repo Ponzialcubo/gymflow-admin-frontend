@@ -1,48 +1,50 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
-import { supabase } from '../../../config/supabase'; // Ajusta la ruta a tu config
+import { useState, useEffect, useMemo } from 'react';
+import { supabase } from '../../../config/supabase';
 
 export const useNutrition = () => {
   const [socios, setSocios] = useState([]);
+  const [catalogoAlimentos, setCatalogoAlimentos] = useState([]);
   const [recientes, setRecientes] = useState([]);
   const [mensaje, setMensaje] = useState({ texto: '', tipo: '' });
   const [loading, setLoading] = useState(false);
   
   const [form, setForm] = useState({ 
-    id_usuario: '', 
-    nombre_dieta: 'Mantenimiento Base', 
-    calorias_objetivo: 2500, 
-    proteinas: 150, 
-    carbohidratos: 250, 
-    grasas: 70 
+    id_usuario: '', nombre_dieta: 'Mantenimiento Base', 
+    calorias_objetivo: 2500, proteinas: 150, carbohidratos: 250, grasas: 70 
   });
 
-  // Carga inicial de socios
+  // Estado inicial del lienzo de comidas
+  const [comidas, setComidas] = useState([
+    { id_temporal: 'c1', nombre: 'Desayuno', alimentos: [] },
+    { id_temporal: 'c2', nombre: 'Almuerzo', alimentos: [] },
+    { id_temporal: 'c3', nombre: 'Cena', alimentos: [] }
+  ]);
+
+  // Carga inicial (Socios y Catálogo de Alimentos)
   useEffect(() => {
-    const fetchSocios = async () => {
+    const fetchData = async () => {
       try {
-        const { data, error } = await supabase
-          .from('usuarios')
-          .select('id, nombre')
-          .eq('rol', 'socio')
-          .eq('activo', true)
-          .order('nombre');
+        const [resSocios, resAlimentos] = await Promise.all([
+          supabase.from('usuarios').select('id, nombre').eq('rol', 'socio').eq('activo', true).order('nombre'),
+          supabase.from('alimentos_catalogo').select('*').eq('activo', true).order('nombre')
+        ]);
 
-        if (error) throw error;
+        if (resSocios.error) throw resSocios.error;
+        if (resAlimentos.error) throw resAlimentos.error;
 
-        setSocios(data || []);
-        // Si hay socios, seleccionamos el primero por defecto en el select
-        if(data && data.length > 0) {
-          setForm(f => ({...f, id_usuario: data[0].id}));
+        setSocios(resSocios.data || []);
+        setCatalogoAlimentos(resAlimentos.data || []);
+        
+        if(resSocios.data && resSocios.data.length > 0) {
+          setForm(f => ({...f, id_usuario: resSocios.data[0].id}));
         }
       } catch (err) {
-        setMensaje({ texto: '❌ Error al conectar con Supabase', tipo: 'error' });
+        setMensaje({ texto: '❌ Error al conectar con la Base de Datos', tipo: 'error' });
       }
     };
-    fetchSocios();
+    fetchData();
   }, []);
 
-  // --- Lógica de Negocio: Cálculo de Coherencia ---
-  // Las proteínas y HC tienen 4 kcal/g, las grasas 9 kcal/g.
   const kcalCalculadas = useMemo(() => {
     return (form.proteinas * 4) + (form.carbohidratos * 4) + (form.grasas * 9);
   }, [form.proteinas, form.carbohidratos, form.grasas]);
@@ -55,8 +57,8 @@ export const useNutrition = () => {
     setMensaje({ texto: '', tipo: '' });
 
     try {
-      // Inserción en la tabla 'dietas'
-      const { error } = await supabase
+      // 1. Guardamos la Dieta Maestra
+      const { data: dietaData, error: errorDieta } = await supabase
         .from('dietas')
         .insert([{
           id_usuario: form.id_usuario,
@@ -64,23 +66,47 @@ export const useNutrition = () => {
           calorias_objetivo: parseInt(form.calorias_objetivo),
           proteinas: parseInt(form.proteinas),
           carbohidratos: parseInt(form.carbohidratos),
-          grasas: parseInt(form.grasas)
-        }]);
+          grasas: parseInt(form.grasas),
+          activa: true
+        }])
+        .select('id').single();
 
-      if (error) throw error;
-      
-      // Actualizamos la lista local de "Recientes" para feedback visual
-      const nombreSocio = socios.find(s => s.id == form.id_usuario)?.nombre;
-      setRecientes(prev => [{
-        id: Date.now(),
-        socio: nombreSocio,
-        plan: form.nombre_dieta,
-        kcal: form.calorias_objetivo
-      }, ...prev].slice(0, 3));
+      if (errorDieta) throw errorDieta;
+      const dietaId = dietaData.id;
 
-      setMensaje({ texto: '✅ Plan nutricional sincronizado en la nube', tipo: 'success' });
+      // 2. Por cada comida, la guardamos y luego guardamos sus alimentos
+      for (const comida of comidas) {
+        if (comida.alimentos.length === 0) continue; // Saltamos comidas vacías
+
+        const { data: comidaData, error: errorComida } = await supabase
+          .from('comidas_dieta')
+          .insert([{ id_dieta: dietaId, momento_dia: comida.nombre }])
+          .select('id').single();
+          
+        if (errorComida) throw errorComida;
+
+        // 3. Insertamos los alimentos de esa comida
+        const alimentosAInsertar = comida.alimentos.map(alimento => ({
+          id_comida: comidaData.id,
+          id_alimento: alimento.id,
+          cantidad_g: alimento.cantidad_g
+        }));
+
+        if (alimentosAInsertar.length > 0) {
+          const { error: errorAlimentos } = await supabase.from('comida_alimentos').insert(alimentosAInsertar);
+          if (errorAlimentos) throw errorAlimentos;
+        }
+      }
+
+      setMensaje({ texto: '✅ Plan Nutricional Asignado Correctamente', tipo: 'success' });
       
-      // Limpiamos el mensaje tras unos segundos
+      // Limpiamos el lienzo
+      setComidas([
+        { id_temporal: 'c1', nombre: 'Desayuno', alimentos: [] },
+        { id_temporal: 'c2', nombre: 'Almuerzo', alimentos: [] },
+        { id_temporal: 'c3', nombre: 'Cena', alimentos: [] }
+      ]);
+      
       setTimeout(() => setMensaje({ texto: '', tipo: '' }), 4000);
 
     } catch (err) {
@@ -93,6 +119,7 @@ export const useNutrition = () => {
 
   return {
     socios, form, setForm, recientes, mensaje, loading,
-    kcalCalculadas, diferenciaKcal, handleSubmit
+    kcalCalculadas, diferenciaKcal, handleSubmit,
+    comidas, setComidas, catalogoAlimentos
   };
 };
