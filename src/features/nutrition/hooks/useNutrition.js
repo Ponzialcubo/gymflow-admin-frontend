@@ -25,6 +25,7 @@ export const useNutrition = () => {
     { id_temporal: 'c4', nombre: 'Cena', alimentos: [] }       
   ]);
 
+  // 1. CARGA INICIAL: Socios y Catálogo
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -49,7 +50,79 @@ export const useNutrition = () => {
     fetchData();
   }, []);
 
-  // CÁLCULO DINÁMICO DE MACROS (Suma de alimentos)
+  // 2. CARGA INTELIGENTE: Traer dieta existente al cambiar de Socio
+  useEffect(() => {
+    const cargarDietaExistente = async () => {
+      if (!form.id_usuario) return;
+
+      try {
+        const { data: dieta, error } = await supabase
+          .from('dietas')
+          .select(`
+            *,
+            comidas_dieta (
+              momento_dia,
+              comida_alimentos (
+                cantidad_g,
+                alimentos_catalogo (*)
+              )
+            )
+          `)
+          .eq('id_usuario', form.id_usuario)
+          .eq('activa', true)
+          .maybeSingle();
+
+        if (error) throw error;
+
+        if (dieta) {
+          // Rellenamos metas superiores
+          setForm(f => ({
+            ...f,
+            nombre_dieta: dieta.nombre_dieta,
+            calorias_objetivo: dieta.calorias_objetivo,
+            proteinas: dieta.proteinas,
+            carbohidratos: dieta.carbohidratos,
+            grasas: dieta.grasas
+          }));
+
+          // Mapeamos alimentos a los bloques correspondientes
+          const estructuraCargada = [
+            { id_temporal: 'c1', nombre: 'Desayuno', alimentos: [] },
+            { id_temporal: 'c2', nombre: 'Comida', alimentos: [] },
+            { id_temporal: 'c3', nombre: 'Merienda', alimentos: [] },
+            { id_temporal: 'c4', nombre: 'Cena', alimentos: [] }
+          ];
+
+          dieta.comidas_dieta.forEach(comidaBD => {
+            const bloque = estructuraCargada.find(b => b.nombre === comidaBD.momento_dia);
+            if (bloque) {
+              bloque.alimentos = comidaBD.comida_alimentos.map(ca => ({
+                ...ca.alimentos_catalogo,
+                cantidad_g: ca.cantidad_g
+              }));
+            }
+          });
+
+          setComidas(estructuraCargada);
+        } else {
+          // Si el socio no tiene dieta, reseteamos el lienzo a limpio
+          setComidas([
+            { id_temporal: 'c1', nombre: 'Desayuno', alimentos: [] },
+            { id_temporal: 'c2', nombre: 'Comida', alimentos: [] },
+            { id_temporal: 'c3', nombre: 'Merienda', alimentos: [] },
+            { id_temporal: 'c4', nombre: 'Cena', alimentos: [] }
+          ]);
+          setForm(f => ({ ...f, nombre_dieta: 'Nuevo Plan Base', proteinas: 150, carbohidratos: 250, grasas: 70, calorias_objetivo: 2500 }));
+        }
+      } catch (err) {
+        console.error("Error al precargar dieta:", err);
+      }
+    };
+
+    cargarDietaExistente();
+  }, [form.id_usuario]); // Reacciona al cambio de socio
+
+  // 3. CÁLCULO DINÁMICO DE MACROS (Suma de alimentos)
   const totalesActuales = useMemo(() => {
     let p = 0, c = 0, g = 0;
     comidas.forEach(comida => {
@@ -71,30 +144,31 @@ export const useNutrition = () => {
 
   const diferenciaKcal = Math.abs((totalesActuales?.kcal || 0) - form.calorias_objetivo);
 
+  // 4. GUARDADO MAESTRO
   const handleSubmit = async (e) => {
-  if (e) e.preventDefault();
-  if (!form.id_usuario) return setMensaje({ texto: '⚠️ Selecciona un socio', tipo: 'error' });
+    if (e) e.preventDefault();
+    if (!form.id_usuario) return setMensaje({ texto: '⚠️ Selecciona un socio', tipo: 'error' });
 
-  setLoading(true);
-  try {
-    // 1. Insertar la Dieta
-    const { data: dietaData, error: errorDieta } = await supabase
-      .from('dietas')
-      .insert([{
-        id_usuario: form.id_usuario,
-        nombre_dieta: form.nombre_dieta,
-        // AQUÍ ESTÁ EL TRUCO: Guardamos los totales reales, no el objetivo del form
-        calorias_objetivo: totalesActuales.kcal, // En vez de parseInt(form.calorias_objetivo)
-        proteinas: totalesActuales.proteinas,    // En vez de parseInt(form.proteinas)
-        carbohidratos: totalesActuales.carbohidratos,
-        grasas: totalesActuales.grasas,
-        activa: true
-      }])
-      .select('id').single();
+    setLoading(true);
+    try {
+      // Marcamos anteriores como inactivas para este usuario
+      await supabase.from('dietas').update({ activa: false }).eq('id_usuario', form.id_usuario);
 
-    if (errorDieta) throw errorDieta;
+      const { data: dietaData, error: errorDieta } = await supabase
+        .from('dietas')
+        .insert([{
+          id_usuario: form.id_usuario,
+          nombre_dieta: form.nombre_dieta,
+          calorias_objetivo: totalesActuales.kcal, 
+          proteinas: totalesActuales.proteinas,
+          carbohidratos: totalesActuales.carbohidratos,
+          grasas: totalesActuales.grasas,
+          activa: true
+        }])
+        .select('id').single();
 
-      // 2. Insertar Comidas y Alimentos
+      if (errorDieta) throw errorDieta;
+
       for (const comida of comidas) {
         if (comida.alimentos.length === 0) continue; 
         const { data: cData, error: eC } = await supabase
@@ -111,13 +185,7 @@ export const useNutrition = () => {
         await supabase.from('comida_alimentos').insert(alimentosInsert);
       }
 
-      setMensaje({ texto: '✅ Plan guardado con éxito', tipo: 'success' });
-      setComidas([
-        { id_temporal: 'c1', nombre: 'Desayuno', alimentos: [] },
-        { id_temporal: 'c2', nombre: 'Comida', alimentos: [] },   
-        { id_temporal: 'c3', nombre: 'Merienda', alimentos: [] },  
-        { id_temporal: 'c4', nombre: 'Cena', alimentos: [] }
-      ]);
+      setMensaje({ texto: '✅ Plan guardado y actualizado con éxito', tipo: 'success' });
       setTimeout(() => setMensaje({ texto: '', tipo: '' }), 4000);
     } catch (err) {
       setMensaje({ texto: '❌ Error: ' + err.message, tipo: 'error' });
