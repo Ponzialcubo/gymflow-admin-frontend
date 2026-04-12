@@ -40,37 +40,40 @@ export default function PaymentsSection() {
         {/* Header con funciones de exportar y abrir modal */}
         <PaymentsHeader 
           onOpenModal={() => setIsModalOpen(true)} 
-          onExportPDF={() => generatePaymentsPDF(subscriptions)} 
+          onExportPDF={() => generatePaymentsPDF(dataFiltrada, activeTab)} 
         />
 
-        {/* --- SELECTOR DE PESTAÑAS (UI) --- */}
-        <div className="flex gap-4 mb-8 bg-slate-50 p-2 rounded-2xl w-fit ml-2">
+        {/* --- SELECTOR DE PESTAÑAS (DISEÑO XL) --- */}
+        <div className="flex bg-slate-100/80 p-2 rounded-[2rem] w-fit mb-10 border border-slate-200 shadow-inner">
           <button 
             onClick={() => setActiveTab('membresias')}
-            className={`px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+            className={`flex items-center gap-3 px-10 py-5 rounded-[1.5rem] text-sm font-black uppercase tracking-widest transition-all duration-300 ${
               activeTab === 'membresias' 
-                ? 'bg-white text-blue-600 shadow-md' 
-                : 'text-slate-400 hover:text-slate-600'
+                ? 'bg-white text-blue-600 shadow-xl scale-105' 
+                : 'text-slate-400 hover:text-slate-600 hover:bg-slate-200/50'
             }`}
           >
-            📋 Membresías
+            <span className="text-2xl">📋</span>
+            Membresías
           </button>
+          
           <button 
             onClick={() => setActiveTab('recibos')}
-            className={`px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+            className={`flex items-center gap-3 px-10 py-5 rounded-[1.5rem] text-sm font-black uppercase tracking-widest transition-all duration-300 ${
               activeTab === 'recibos' 
-                ? 'bg-white text-blue-600 shadow-md' 
-                : 'text-slate-400 hover:text-slate-600'
+                ? 'bg-white text-blue-600 shadow-xl scale-105' 
+                : 'text-slate-400 hover:text-slate-600 hover:bg-slate-200/50'
             }`}
           >
-            💰 Historial Recibos
+            <span className="text-2xl">💰</span>
+            Historial Recibos
           </button>
         </div>
         
         {/* Tabla con la información filtrada */}
         <PaymentsTable 
           subscriptions={dataFiltrada} 
-          activeTab={activeTab} // <-- ESTA LÍNEA ES CLAVE
+          activeTab={activeTab} // 
         />
       </div>
 
