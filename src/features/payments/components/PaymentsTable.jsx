@@ -1,11 +1,14 @@
 const StatusBadge = ({ status }) => {
-  const styles = status === 'activo' 
-    ? 'bg-emerald-50 text-emerald-600 border-emerald-200' 
-    : 'bg-red-50 text-red-600 border-red-200';
+  const styles = {
+    activo: 'bg-emerald-50 text-emerald-600 border-emerald-200',
+    cancelado: 'bg-red-50 text-red-600 border-red-200',
+    recibo_generado: 'bg-blue-50 text-blue-600 border-blue-200',
+    recibo: 'bg-purple-50 text-purple-600 border-purple-200',
+  };
   
   return (
-    <span className={`text-[10px] xl:text-xs font-black px-3 py-1 rounded-full uppercase italic border ${styles}`}>
-      {status}
+    <span className={`text-[10px] xl:text-xs font-black px-3 py-1 rounded-full uppercase italic border ${styles[status] || 'bg-slate-50'}`}>
+      {status.replace('_', ' ')}
     </span>
   );
 };
