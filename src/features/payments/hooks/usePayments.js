@@ -80,9 +80,7 @@ export const usePayments = () => {
         .eq('id_usuario', newSub.id_usuario)
         .eq('estado', 'activo'); 
 
-      if (updateError) {
-         console.warn("Aviso (No bloqueante):", updateError);
-      }
+      if (updateError) console.warn("Aviso:", updateError);
 
       // 2. Calculamos expiración
       let fechaExpiracion = new Date();
@@ -101,7 +99,20 @@ export const usePayments = () => {
 
       if (insertError) throw insertError;
 
-      // 4. Limpiamos. Ojo: Usamos la tarifa oficial de la BBDD, no un número fijo.
+      // Al dar de alta una suscripción, generamos automáticamente el recibo
+      const { error: pagoError } = await supabase
+        .from('pagos')
+        .insert([{
+            id_usuario: newSub.id_usuario,
+            monto: parseFloat(newSub.precio),
+            concepto: `Mensualidad Plan ${newSub.tipo_plan}`,
+            metodo_pago: 'Tarjeta / Recepción', // O el método que suelas usar
+            estado: 'completado'
+        }]);
+
+      if (pagoError) console.error("Error al registrar el recibo de pago:", pagoError);
+
+      // 4. Limpiamos.
       setIsModalOpen(false);
       setNewSub({ id_usuario: '', tipo_plan: 'Basic', precio: tarifas.Basic, estado: 'activo' });
       fetchData(); 
