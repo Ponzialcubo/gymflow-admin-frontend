@@ -8,19 +8,24 @@ export const useNutrition = () => {
   const [mensaje, setMensaje] = useState({ texto: '', tipo: '' });
   const [loading, setLoading] = useState(false);
   
+  // Objetivos fijados por el monitor
   const [form, setForm] = useState({ 
-    id_usuario: '', nombre_dieta: 'Mantenimiento Base', 
-    calorias_objetivo: 2500, proteinas: 150, carbohidratos: 250, grasas: 70 
+    id_usuario: '', 
+    nombre_dieta: 'Mantenimiento Base', 
+    calorias_objetivo: 2500, 
+    proteinas: 150, 
+    carbohidratos: 250, 
+    grasas: 70 
   });
 
-  // Estado inicial del lienzo de comidas
+  // Estado del lienzo de comidas (Estructura de Nivel 2)
   const [comidas, setComidas] = useState([
     { id_temporal: 'c1', nombre: 'Desayuno', alimentos: [] },
     { id_temporal: 'c2', nombre: 'Almuerzo', alimentos: [] },
     { id_temporal: 'c3', nombre: 'Cena', alimentos: [] }
   ]);
 
-  // Carga inicial (Socios y Catálogo de Alimentos)
+  // 1. Carga inicial de datos
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -45,19 +50,50 @@ export const useNutrition = () => {
     fetchData();
   }, []);
 
-  const kcalCalculadas = useMemo(() => {
-    return (form.proteinas * 4) + (form.carbohidratos * 4) + (form.grasas * 9);
-  }, [form.proteinas, form.carbohidratos, form.grasas]);
+  // 2. LÓGICA DE CÁLCULO EN TIEMPO REAL (Totales sumados de los alimentos añadidos)
+  const totalesActuales = useMemo(() => {
+    let p = 0, c = 0, g = 0;
 
+    comidas.forEach(comida => {
+      comida.alimentos.forEach(al => {
+        const factor = al.cantidad_g / 100;
+        p += (al.proteinas_100g || 0) * factor;
+        c += (al.carbohidratos_100g || 0) * factor;
+        g += (al.grasas_100g || 0) * factor;
+      });
+    });
+
+    const kcal = (p * 4) + (c * 4) + (g * 9);
+    
+    return { 
+      proteinas: Math.round(p), 
+      carbohidratos: Math.round(c), 
+      grasas: Math.round(g), 
+      kcal: Math.round(kcal) 
+    };
+  }, [comidas]);
+
+  // Usamos el total sumado para comparar con el objetivo del formulario
+  const kcalCalculadas = totalesActuales.kcal;
   const diferenciaKcal = Math.abs(kcalCalculadas - form.calorias_objetivo);
 
+  // 3. ENVÍO MAESTRO A SUPABASE (Transaccional manual)
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
+    if (!form.id_usuario) return setMensaje({ texto: '⚠️ Selecciona un socio', tipo: 'error' });
+
     setLoading(true);
     setMensaje({ texto: '', tipo: '' });
 
     try {
-      // 1. Guardamos la Dieta Maestra
+      // A. Desactivar dietas anteriores (Opcional, para que solo haya una 'activa')
+      await supabase
+        .from('dietas')
+        .update({ activa: false })
+        .eq('id_usuario', form.id_usuario)
+        .eq('activa', true);
+
+      // B. Insertar la Dieta Principal (Estrategia)
       const { data: dietaData, error: errorDieta } = await supabase
         .from('dietas')
         .insert([{
@@ -74,9 +110,9 @@ export const useNutrition = () => {
       if (errorDieta) throw errorDieta;
       const dietaId = dietaData.id;
 
-      // 2. Por cada comida, la guardamos y luego guardamos sus alimentos
+      // C. Recorrer bloques de comidas e insertar
       for (const comida of comidas) {
-        if (comida.alimentos.length === 0) continue; // Saltamos comidas vacías
+        if (comida.alimentos.length === 0) continue; 
 
         const { data: comidaData, error: errorComida } = await supabase
           .from('comidas_dieta')
@@ -85,22 +121,32 @@ export const useNutrition = () => {
           
         if (errorComida) throw errorComida;
 
-        // 3. Insertamos los alimentos de esa comida
-        const alimentosAInsertar = comida.alimentos.map(alimento => ({
+        // D. Insertar alimentos vinculados a esa comida
+        const alimentosAInsertar = comida.alimentos.map(al => ({
           id_comida: comidaData.id,
-          id_alimento: alimento.id,
-          cantidad_g: alimento.cantidad_g
+          id_alimento: al.id,
+          cantidad_g: al.cantidad_g
         }));
 
-        if (alimentosAInsertar.length > 0) {
-          const { error: errorAlimentos } = await supabase.from('comida_alimentos').insert(alimentosAInsertar);
-          if (errorAlimentos) throw errorAlimentos;
-        }
+        const { error: errorAlimentos } = await supabase
+          .from('comida_alimentos')
+          .insert(alimentosAInsertar);
+          
+        if (errorAlimentos) throw errorAlimentos;
       }
 
-      setMensaje({ texto: '✅ Plan Nutricional Asignado Correctamente', tipo: 'success' });
+      // Feedback de éxito
+      const nombreSocio = socios.find(s => s.id === form.id_usuario)?.nombre;
+      setRecientes(prev => [{
+        id: Date.now(),
+        socio: nombreSocio,
+        plan: form.nombre_dieta,
+        kcal: form.calorias_objetivo
+      }, ...prev].slice(0, 3));
+
+      setMensaje({ texto: '✅ Plan completo sincronizado correctamente', tipo: 'success' });
       
-      // Limpiamos el lienzo
+      // Reset del lienzo
       setComidas([
         { id_temporal: 'c1', nombre: 'Desayuno', alimentos: [] },
         { id_temporal: 'c2', nombre: 'Almuerzo', alimentos: [] },
@@ -110,8 +156,8 @@ export const useNutrition = () => {
       setTimeout(() => setMensaje({ texto: '', tipo: '' }), 4000);
 
     } catch (err) {
-      console.error(err);
-      setMensaje({ texto: '❌ Error al guardar el plan: ' + err.message, tipo: 'error' });
+      console.error("Error en el guardado complejo:", err);
+      setMensaje({ texto: '❌ Error: ' + (err.message || 'Error en el servidor'), tipo: 'error' });
     } finally {
       setLoading(false);
     }
@@ -119,7 +165,7 @@ export const useNutrition = () => {
 
   return {
     socios, form, setForm, recientes, mensaje, loading,
-    kcalCalculadas, diferenciaKcal, handleSubmit,
+    kcalCalculadas, totalesActuales, diferenciaKcal, handleSubmit,
     comidas, setComidas, catalogoAlimentos
   };
 };
