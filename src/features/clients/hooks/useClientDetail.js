@@ -46,12 +46,40 @@ export const useClientDetail = (socioId, onBack) => {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
+  // --- LA NUEVA FUNCIÓN DE BAJA LÓGICA ---
   const handleBaja = async () => {
-    if (window.confirm("¿Confirmas la baja del socio?")) {
-      try {
-        await supabase.from('usuarios').update({ activo: false }).eq('id', socioId);
-        if (onBack) onBack();
-      } catch (err) { alert("Error al procesar la baja."); }
+    const confirmacion = window.confirm(
+      "¿Estás seguro de que quieres dar de baja a este socio? \nSe le denegará el acceso a la app móvil, pero conservarás su historial."
+    );
+    
+    if (!confirmacion) return;
+
+    try {
+      // 1. Cancelamos sus suscripciones activas
+      const { error: errorSub } = await supabase
+        .from('suscripciones')
+        .update({ estado: 'cancelado' })
+        .eq('id_usuario', socioId)
+        .eq('estado', 'activo');
+
+      if (errorSub) console.warn("No se pudo cancelar suscripción:", errorSub);
+
+      // 2. Lo marcamos como inactivo (Baja Lógica)
+      const { error: errorUser } = await supabase
+        .from('usuarios')
+        .update({ activo: false })
+        .eq('id', socioId);
+
+      if (errorUser) throw errorUser;
+
+      alert("✅ Socio dado de baja correctamente.");
+      
+      // 3. Volvemos a la pantalla principal
+      if (onBack) onBack();
+
+    } catch (error) {
+      console.error("Error al dar de baja:", error);
+      alert("Hubo un error al procesar la baja: " + error.message);
     }
   };
 
@@ -64,15 +92,13 @@ export const useClientDetail = (socioId, onBack) => {
     } catch (err) { alert("Error al actualizar."); }
   };
 
-  // --- EL ARREGLO DEL BOTÓN GUARDAR Y EL IMC ---
   const handleAddMedicion = async (e) => {
-    e.preventDefault(); // Volvemos al funcionamiento normal
+    e.preventDefault(); 
     try {
       const peso = parseFloat(newMedicion.peso_kg);
       const altura = parseFloat(newMedicion.altura_cm);
       let imcCalculado = null;
 
-      // Calculamos el IMC aquí, de forma segura
       if (peso > 0 && altura > 0) {
         imcCalculado = (peso / Math.pow(altura / 100, 2)).toFixed(1);
       }

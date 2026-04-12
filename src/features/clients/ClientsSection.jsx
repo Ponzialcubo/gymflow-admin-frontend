@@ -16,16 +16,12 @@ export default function ClientsSection() {
     selectedSocioId,
     setSelectedSocioId,
     loading,
-    newSocio,
-    setNewSocio,
-    handleAddSocio,
     fetchSocios
   } = useClients();
 
   // VISTA DE DETALLE DEL SOCIO (Al hacer clic en uno)
   if (selectedSocioId) {
     return (
-      // Actualizado a duration-700 para consistencia total
       <div className="animate-in fade-in duration-700 pb-20">
         <ClientDetail 
           socioId={selectedSocioId} 
@@ -40,7 +36,6 @@ export default function ClientsSection() {
 
   // VISTA DE LISTADO GENERAL
   return (
-    // Actualizado a duration-700 y mantenemos el espaciado
     <div className="space-y-8 animate-in fade-in duration-700 pb-20">
       
       <ClientsHeader 
@@ -57,12 +52,10 @@ export default function ClientsSection() {
         />
       </div>
 
+      {/* MODAL INTELIGENTE: Ya no necesita recibir estados desde fuera */}
       <AddClientModal 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
-        onSubmit={handleAddSocio} 
-        newSocio={newSocio} 
-        setNewSocio={setNewSocio} 
         onClientAdded={() => fetchSocios()}
       />
     </div>
