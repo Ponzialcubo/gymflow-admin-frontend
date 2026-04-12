@@ -1,56 +1,49 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../../../config/supabase';
+import { useSettings } from './hooks/useSettings'; // Ajusta la ruta correcta
 
-export default function ProfileSettings({ user }) {
-  const [saving, setSaving] = useState(false);
+export default function ProfileSettings() {
+  // 1. Extraemos todo lo necesario del Hook maestro
+  const { profile, loading, handleUpdateProfile } = useSettings();
   
-  // 1. Estado inicial
-  const [profile, setProfile] = useState({
+  // 2. Estado local para editar antes de guardar
+  const [localProfile, setLocalProfile] = useState({
     nombre: '',
     email: '',
-    rol: '',
+    rol: 'ADMIN',
     estado: 'ACTIVO'
   });
 
-  // 2. EFECTO CRUCIAL: Si el prop 'user' cambia o llega tarde, actualizamos los inputs
+  const [saving, setSaving] = useState(false);
+
+  // 3. Sincronizamos el estado local cuando el hook termina de cargar
   useEffect(() => {
-    if (user) {
-      console.log("Datos recibidos en Perfil:", user); // Para debug en consola
-      setProfile({
-        nombre: user.nombre || '',
-        email: user.email || '',
-        rol: user.rol || 'ADMIN',
+    if (!loading && profile.email) {
+      setLocalProfile({
+        nombre: profile.nombre || '',
+        email: profile.email || '',
+        rol: profile.rol || 'ADMIN', // Puedes ajustarlo si en DB guardas el rol del admin
         estado: 'ACTIVO'
       });
     }
-  }, [user]); // Se ejecuta cada vez que 'user' cambie
+  }, [profile, loading]);
 
-  const handleSave = async (e) => {
+  // 4. Función de guardado usando el Hook
+  const onSubmitForm = async (e) => {
     e.preventDefault();
     setSaving(true);
-    try {
-      const { error } = await supabase
-        .from('usuarios')
-        .update({
-          nombre: profile.nombre,
-          rol: profile.rol
-        })
-        .eq('email', profile.email);
-
-      if (error) throw error;
-      
-      // Actualizamos el localStorage para que el resto de la app se entere del cambio
-      const updatedUser = { ...user, nombre: profile.nombre };
-      localStorage.setItem('gymUser', JSON.stringify(updatedUser));
-      
-      alert("✅ ¡Perfil actualizado correctamente!");
-      window.location.reload(); // Recargamos para refrescar el Sidebar también
-    } catch (err) {
-      alert("Error al guardar: " + err.message);
-    } finally {
-      setSaving(false);
-    }
+    
+    // Le pasamos la data al hook para que él hable con Supabase
+    await handleUpdateProfile({
+      nombre: localProfile.nombre,
+      email: localProfile.email
+    });
+    
+    setSaving(false);
   };
+
+  if (loading) {
+    return <div className="p-20 text-center animate-pulse font-black text-slate-300 uppercase tracking-widest">Cargando perfil...</div>;
+  }
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
@@ -66,12 +59,12 @@ export default function ProfileSettings({ user }) {
           <div>
             <h3 className="text-4xl font-black text-slate-800 tracking-tight">Gestión de Perfil</h3>
             <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mt-2">
-              Bienvenido de nuevo, <span className="text-blue-600">{profile.nombre.split(' ')[0] || 'Admin'}</span>
+              Bienvenido de nuevo, <span className="text-blue-600">{localProfile.nombre.split(' ')[0] || 'Admin'}</span>
             </p>
           </div>
         </div>
 
-        <form onSubmit={handleSave} className="space-y-8">
+        <form onSubmit={onSubmitForm} className="space-y-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             
             {/* Nombre Completo */}
@@ -79,8 +72,8 @@ export default function ProfileSettings({ user }) {
               <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1 block">Nombre Completo</label>
               <input 
                 type="text" 
-                value={profile.nombre}
-                onChange={(e) => setProfile({...profile, nombre: e.target.value})}
+                value={localProfile.nombre}
+                onChange={(e) => setLocalProfile({...localProfile, nombre: e.target.value})}
                 className="w-full p-5 text-lg bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none focus:border-blue-500 font-bold transition-all text-slate-800"
                 placeholder="Escribe tu nombre..."
                 required
@@ -92,7 +85,7 @@ export default function ProfileSettings({ user }) {
               <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1 block">Estado de Cuenta</label>
               <div className="w-full p-5 text-lg bg-slate-50/50 border-2 border-slate-100 rounded-2xl font-bold text-emerald-500 flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                {profile.estado}
+                {localProfile.estado}
               </div>
             </div>
 
@@ -103,10 +96,11 @@ export default function ProfileSettings({ user }) {
               </label>
               <input 
                 type="email" 
-                value={profile.email}
+                value={localProfile.email}
                 readOnly
                 className="w-full p-5 text-lg bg-slate-50/50 border-2 border-slate-100 rounded-2xl font-bold text-slate-400 cursor-not-allowed outline-none"
               />
+              <p className="text-[10px] text-slate-400 font-bold mt-1 ml-1">El email solo se puede cambiar desde Supabase Auth.</p>
             </div>
 
             {/* Rol */}
@@ -116,7 +110,7 @@ export default function ProfileSettings({ user }) {
               </label>
               <input 
                 type="text" 
-                value={profile.rol.toUpperCase()}
+                value={localProfile.rol.toUpperCase()}
                 readOnly
                 className="w-full p-5 text-lg bg-slate-50/50 border-2 border-slate-100 rounded-2xl font-black text-blue-400 cursor-not-allowed outline-none tracking-widest"
               />
@@ -134,6 +128,13 @@ export default function ProfileSettings({ user }) {
           </div>
         </form>
       </div>
+      {mensaje && mensaje.texto && (
+        <div className={`fixed bottom-10 right-10 p-5 rounded-2xl shadow-2xl border font-black text-[10px] uppercase tracking-widest z-50 animate-in slide-in-from-bottom-5 ${
+          mensaje.tipo === 'success' ? 'bg-emerald-500 text-white border-emerald-400' : 'bg-red-500 text-white border-red-400'
+        }`}>
+          {mensaje.texto}
+        </div>
+      )}
     </div>
   );
 }
