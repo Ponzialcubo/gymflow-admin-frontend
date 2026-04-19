@@ -11,10 +11,10 @@ const adminlessSupabase = createClient(
 export default function AddClientModal({ isOpen, onClose, onClientAdded }) {
   const [formData, setFormData] = useState({
     nombre: '',
-    email: '',
-    password: 'GymFlow2024!'
+    email: ''
   });
 
+  const [password, setPassword] = useState('GymFlow2024!');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -22,13 +22,19 @@ export default function AddClientModal({ isOpen, onClose, onClientAdded }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsSubmitting(true);
     setErrorMsg('');
+
+    if (password.length < 6) {
+      setErrorMsg('La contraseña debe tener al menos 6 caracteres.');
+      return;
+    }
+
+    setIsSubmitting(true);
 
     try {
       const { error } = await adminlessSupabase.auth.signUp({
         email: formData.email,
-        password: formData.password,
+        password: password,
         options: {
           data: {
             full_name: formData.nombre,
@@ -39,7 +45,8 @@ export default function AddClientModal({ isOpen, onClose, onClientAdded }) {
 
       if (error) throw error;
 
-      setFormData({ nombre: '', email: '', password: 'GymFlow2024!' });
+      setFormData({ nombre: '', email: '' });
+      setPassword('GymFlow2024!');
       if (onClientAdded) onClientAdded();
       onClose();
 
@@ -73,16 +80,28 @@ export default function AddClientModal({ isOpen, onClose, onClientAdded }) {
 
           <div>
             <label className="text-sm font-black text-blue-600 uppercase tracking-widest ml-1">Email Profesional</label>
-            <input 
+            <input
               required
-              type="email" 
+              type="email"
               className="w-full mt-3 p-5 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-blue-500 outline-none text-lg font-bold transition-all placeholder:text-slate-300"
               value={formData.email}
               onChange={(e) => setFormData({...formData, email: e.target.value})}
               placeholder="carlos@gymflow.com"
             />
           </div>
-          
+
+          <div>
+            <label className="text-sm font-black text-blue-600 uppercase tracking-widest ml-1">Contraseña de acceso</label>
+            <input
+              required
+              type="text"
+              className="w-full mt-3 p-5 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-blue-500 outline-none text-lg font-bold transition-all placeholder:text-slate-300"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Mínimo 6 caracteres"
+            />
+          </div>
+
           {errorMsg && (
             <p className="text-sm font-bold text-red-500 bg-red-50 rounded-2xl px-5 py-3">
               {errorMsg}
