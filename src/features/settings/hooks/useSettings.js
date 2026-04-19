@@ -104,18 +104,18 @@ export const useSettings = () => {
 
   const handleUpdatePassword = async (newPassword) => {
     setMensaje({ texto: '⌛ Actualizando credenciales de seguridad...', tipo: 'info' });
-    
-    try {
-      // API de Auth nativa de Supabase
-      const { error } = await supabase.auth.updateUser({
-        password: newPassword
-      });
 
-      if (error) throw error;
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+
+      if (error) {
+        setMensaje({ texto: '❌ Error de seguridad: ' + error.message, tipo: 'error' });
+        return false;
+      }
 
       setMensaje({ texto: '✅ Contraseña actualizada correctamente', tipo: 'success' });
       setTimeout(() => setMensaje({ texto: '', tipo: '' }), 4000);
-      return true; 
+      return true;
     } catch (err) {
       setMensaje({ texto: '❌ Error de seguridad: ' + err.message, tipo: 'error' });
       return false;

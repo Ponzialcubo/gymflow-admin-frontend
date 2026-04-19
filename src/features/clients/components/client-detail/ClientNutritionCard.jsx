@@ -1,5 +1,5 @@
 import React from 'react';
-import ViewDietModal from './ViewDietModal'; // Importa el nuevo componente
+import ViewDietModal from './ViewDietModal'; 
 
 export default function ClientNutritionCard({ 
   dieta, 

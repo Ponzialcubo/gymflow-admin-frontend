@@ -1,14 +1,11 @@
 import React from 'react';
+import ModalLayout from '../../../components/ui/ModalLayout';
 
 export default function AddExerciseModal({ isOpen, onClose, onSubmit, formData, setFormData }) {
-  if (!isOpen) return null;
-
   const musculos = ['Pecho', 'Espalda', 'Pierna', 'Hombro', 'Brazos', 'Core'];
 
   return (
-    <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-md flex items-center justify-center z-[100] p-4">
-      {/* Max-w-2xl para que el modal sea un poco más ancho y quepa la letra grande */}
-      <div className="bg-white rounded-[3rem] p-10 w-full max-w-2xl shadow-2xl animate-in zoom-in duration-300">
+    <ModalLayout isOpen={isOpen} maxWidth="2xl">
         <h2 className="text-3xl xl:text-4xl font-black text-slate-800 mb-2 tracking-tighter">Registrar Movimiento</h2>
         <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-8">Expansión del catálogo técnico</p>
         
@@ -74,7 +71,6 @@ export default function AddExerciseModal({ isOpen, onClose, onSubmit, formData, 
             </button>
           </div>
         </form>
-      </div>
-    </div>
+    </ModalLayout>
   );
 }

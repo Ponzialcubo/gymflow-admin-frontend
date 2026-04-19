@@ -169,11 +169,12 @@ function VolumenInput({ label, value, onChange }) {
   return (
     <div className="bg-slate-50 p-6 rounded-3xl border border-slate-100 text-center transition-all focus-within:border-blue-400 focus-within:bg-white focus-within:shadow-lg">
       <label className="text-[9px] font-black text-slate-400 uppercase block mb-1 tracking-widest">{label}</label>
-      <input 
-        type="number" 
-        className="w-full bg-transparent text-3xl font-black text-slate-800 text-center outline-none" 
-        value={value} 
-        onChange={e => onChange(e.target.value)} 
+      <input
+        type="number"
+        min="1"
+        className="w-full bg-transparent text-3xl font-black text-slate-800 text-center outline-none"
+        value={value}
+        onChange={e => onChange(Math.max(1, Number(e.target.value) || 1))}
       />
     </div>
   );

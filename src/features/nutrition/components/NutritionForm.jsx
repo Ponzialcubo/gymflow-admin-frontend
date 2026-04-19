@@ -109,11 +109,12 @@ function MacroInput({ label, color, goal, current, onChange }) {
       <div className="flex flex-col items-center">
         <span className="text-2xl font-black">{current}</span>
         <div className="h-[1px] w-8 bg-current opacity-20 my-1"></div>
-        <input 
-          type="number" 
-          className="w-full bg-transparent text-xs font-bold outline-none text-center opacity-60" 
-          value={goal} 
-          onChange={e => onChange(e.target.value)} 
+        <input
+          type="number"
+          min="1"
+          className="w-full bg-transparent text-xs font-bold outline-none text-center opacity-60"
+          value={goal}
+          onChange={e => onChange(Math.max(1, Number(e.target.value) || 1))}
         />
       </div>
       <div className="absolute bottom-0 left-0 h-1.5 bg-current opacity-20 w-full"></div>

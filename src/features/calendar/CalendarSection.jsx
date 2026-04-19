@@ -5,6 +5,7 @@ import AddClassModal from './components/AddClassModal';
 export default function CalendarSection() {
   const [clases, setClases] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [classToEdit, setClassToEdit] = useState(null);
 
@@ -21,10 +22,7 @@ export default function CalendarSection() {
   const [currentWeekStart, setCurrentWeekStart] = useState(getStartOfWeek(new Date()));
   
   // 2. Estado para el día exacto seleccionado (Arranca en hoy, formato YYYY-MM-DD)
-  const [selectedDate, setSelectedDate] = useState(() => {
-    const tzoffset = (new Date()).getTimezoneOffset() * 60000; 
-    return new Date(Date.now() - tzoffset).toISOString().split('T')[0];
-  });
+  const [selectedDate, setSelectedDate] = useState(() => new Date().toLocaleDateString('en-CA'));
 
   // 3. Generamos los 7 días de la semana basados en el currentWeekStart
   const generarDiasSemana = () => {
@@ -36,8 +34,7 @@ export default function CalendarSection() {
       const currentDate = new Date(currentWeekStart);
       currentDate.setDate(currentWeekStart.getDate() + i);
       
-      const tzoffset = currentDate.getTimezoneOffset() * 60000;
-      const dateString = new Date(currentDate - tzoffset).toISOString().split('T')[0];
+      const dateString = currentDate.toLocaleDateString('en-CA');
 
       days.push({
         dateString: dateString, // Ej: "2026-04-06"
@@ -78,6 +75,7 @@ export default function CalendarSection() {
       setClases(data || []);
     } catch (err) {
       console.error(err.message);
+      setFetchError(true);
     } finally {
       setLoading(false);
     }
@@ -168,6 +166,14 @@ export default function CalendarSection() {
       </div>
 
       {/* CONTENEDOR DE CLASES EXACTAMENTE IGUAL QUE ANTES */}
+      {fetchError && (
+        <div className="bg-red-50 border border-red-100 rounded-3xl px-8 py-5">
+          <p className="text-sm font-black text-red-500 uppercase tracking-widest">
+            Error al cargar el calendario. Comprueba tu conexión e intenta de nuevo.
+          </p>
+        </div>
+      )}
+
       <div className="w-full">
         {loading ? (
           <div className="p-20 text-center animate-pulse font-black text-slate-300 uppercase tracking-widest">

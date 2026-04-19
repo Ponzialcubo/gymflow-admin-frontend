@@ -1,40 +1,32 @@
 import React, { useState } from 'react';
-import { supabase } from '../../../config/supabase'; 
-// 1. IMPORTANTE: Importamos createClient para hacer nuestro clon temporal
-import { createClient } from '@supabase/supabase-js'; 
+import { createClient } from '@supabase/supabase-js';
+
+// Cliente sin persistencia de sesión para crear usuarios sin desloguear al admin
+const adminlessSupabase = createClient(
+  import.meta.env.VITE_SUPABASE_URL,
+  import.meta.env.VITE_SUPABASE_ANON_KEY,
+  { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } }
+);
 
 export default function AddClientModal({ isOpen, onClose, onClientAdded }) {
   const [formData, setFormData] = useState({
     nombre: '',
     email: '',
-    password: 'GymFlow2024!' 
+    password: 'GymFlow2024!'
   });
-  
+
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
 
   if (!isOpen) return null;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setErrorMsg('');
 
     try {
-      // 2. EL TRUCO SENIOR: Creamos un "Supabase temporal" ciego
-      // Esto crea el usuario pero le prohibimos explícitamente tocar la sesión actual
-      const tempSupabase = createClient(
-        import.meta.env.VITE_SUPABASE_URL, 
-        import.meta.env.VITE_SUPABASE_ANON_KEY, 
-        {
-          auth: { 
-            persistSession: false, // ¡Clave! No guarda la sesión en tu navegador
-            autoRefreshToken: false,
-            detectSessionInUrl: false
-          }
-        }
-      );
-
-      // 3. Usamos el cliente temporal en lugar del principal
-      const { data, error } = await tempSupabase.auth.signUp({
+      const { error } = await adminlessSupabase.auth.signUp({
         email: formData.email,
         password: formData.password,
         options: {
@@ -47,17 +39,13 @@ export default function AddClientModal({ isOpen, onClose, onClientAdded }) {
 
       if (error) throw error;
 
-      // 4. Limpiamos y cerramos
       setFormData({ nombre: '', email: '', password: 'GymFlow2024!' });
-      
       if (onClientAdded) onClientAdded();
       onClose();
-      
-      alert("✅ Socio creado correctamente. Tu sesión de Admin sigue activa.");
 
     } catch (error) {
       console.error("Error al crear socio en Supabase Auth:", error);
-      alert("Hubo un error al crear el socio: " + error.message);
+      setErrorMsg(error.message || 'Error al crear el socio.');
     } finally {
       setIsSubmitting(false);
     }
@@ -95,6 +83,12 @@ export default function AddClientModal({ isOpen, onClose, onClientAdded }) {
             />
           </div>
           
+          {errorMsg && (
+            <p className="text-sm font-bold text-red-500 bg-red-50 rounded-2xl px-5 py-3">
+              {errorMsg}
+            </p>
+          )}
+
           <div className="flex gap-6 pt-6">
             <button 
               type="button"

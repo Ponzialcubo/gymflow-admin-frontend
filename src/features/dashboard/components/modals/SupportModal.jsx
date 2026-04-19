@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import { supabase } from '../../../config/supabase';
 
 export default function SupportModal({ isOpen, onClose }) {
   const [formData, setFormData] = useState({
@@ -10,6 +10,7 @@ export default function SupportModal({ isOpen, onClose }) {
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [enviado, setEnviado] = useState(false);
+  const [errorEnvio, setErrorEnvio] = useState(false);
 
   if (!isOpen) return null;
 
@@ -18,12 +19,19 @@ export default function SupportModal({ isOpen, onClose }) {
     setIsSubmitting(true);
 
     try {
-      await axios.post('http://localhost:3000/api/soporte', {
-        ...formData,
-        fecha: new Date().toISOString(),
-        usuario_origen: 'Admin_Dashboard' 
-      });
-      
+      setErrorEnvio(false);
+      const { error } = await supabase
+        .from('tickets_soporte')
+        .insert({
+          asunto: formData.asunto,
+          mensaje: formData.mensaje,
+          prioridad: formData.prioridad,
+          usuario_origen: 'Admin_Dashboard',
+          estado: 'abierto'
+        });
+
+      if (error) throw error;
+
       setEnviado(true);
       setTimeout(() => {
         setEnviado(false);
@@ -32,7 +40,7 @@ export default function SupportModal({ isOpen, onClose }) {
       }, 2000);
     } catch (error) {
       console.error("Error al contactar soporte:", error);
-      alert("Error al enviar el ticket. Revisa la conexión con el servidor.");
+      setErrorEnvio(true);
     } finally {
       setIsSubmitting(false);
     }
@@ -85,6 +93,12 @@ export default function SupportModal({ isOpen, onClose }) {
                 />
               </div>
               
+              {errorEnvio && (
+                <p className="text-sm font-bold text-red-500 bg-red-50 rounded-2xl px-5 py-3">
+                  Error al enviar el ticket. Revisa la conexión con el servidor.
+                </p>
+              )}
+
               <div className="flex gap-6 pt-6">
                 <button 
                   type="button"
