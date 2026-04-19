@@ -6,17 +6,19 @@ export default function SecuritySettings() {
   
   const [pass, setPass] = useState({ current: '', new: '', confirm: '' });
   const [isUpdating, setIsUpdating] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
 
   const onSubmitForm = async (e) => {
     e.preventDefault();
-    
+    setErrorMsg('');
+
     if (pass.new.length < 8) {
-      alert("La nueva contraseña debe tener al menos 8 caracteres.");
+      setErrorMsg('La nueva contraseña debe tener al menos 8 caracteres.');
       return;
     }
-    
+
     if (pass.new !== pass.confirm) {
-      alert("Las contraseñas nuevas no coinciden.");
+      setErrorMsg('Las contraseñas nuevas no coinciden.');
       return;
     }
 
@@ -82,6 +84,10 @@ export default function SecuritySettings() {
             </div>
           </div>
 
+          {errorMsg && (
+            <p className="text-sm font-bold text-red-500 bg-red-50 rounded-2xl px-5 py-3 mt-3">{errorMsg}</p>
+          )}
+
           <div className="flex flex-col md:flex-row items-center justify-between gap-6 pt-6 border-t border-slate-100">
             <div className="flex items-center gap-4 text-slate-500">
               <div className="w-12 h-12 rounded-full bg-amber-50 flex items-center justify-center text-amber-500 text-xl shrink-0">
@@ -109,10 +115,11 @@ export default function SecuritySettings() {
             <h3 className="text-3xl font-black text-slate-800 tracking-tight">Dispositivos Vinculados</h3>
             <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mt-2">Controla desde dónde accedes</p>
           </div>
-          <button 
-            type="button" 
-            onClick={() => alert("Función para revocar sesiones de Supabase Auth en desarrollo.")}
-            className="px-6 py-4 bg-red-50 text-red-600 border border-red-100 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-red-600 hover:text-white transition-all shadow-sm"
+          <button
+            type="button"
+            disabled={true}
+            title="Próximamente"
+            className="px-6 py-4 bg-red-50 text-red-600 border border-red-100 rounded-xl text-xs font-black uppercase tracking-widest opacity-50 cursor-not-allowed shadow-sm"
           >
             Cerrar otras sesiones
           </button>

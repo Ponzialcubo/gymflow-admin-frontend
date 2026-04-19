@@ -7,6 +7,8 @@ export default function StaffSettings() {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [openMenuId, setOpenMenuId] = useState(null);
+  const [errorMsg, setErrorMsg] = useState('');
+  const [deleteConfirmId, setDeleteConfirmId] = useState(null);
 
   const fetchStaff = async () => {
     try {
@@ -30,16 +32,18 @@ export default function StaffSettings() {
   }, []);
 
   const handleDelete = async (id) => {
-    if (!window.confirm("¿Estás seguro? Se eliminará de la plantilla (Nota: El acceso Auth debe revocarse en el panel de Supabase por seguridad).")) return;
-    
+    if (deleteConfirmId !== id) {
+      setDeleteConfirmId(id);
+      setOpenMenuId(null);
+      return;
+    }
+    setDeleteConfirmId(null);
     try {
       const { error } = await supabase.from('empleados').delete().eq('id', id);
       if (error) throw error;
-      
-      setOpenMenuId(null);
       fetchStaff();
     } catch (error) {
-      alert("Error al eliminar: " + error.message);
+      setErrorMsg(error.message);
     }
   };
 
@@ -48,11 +52,10 @@ export default function StaffSettings() {
     try {
       const { error } = await supabase.from('empleados').update({ estado: nuevoEstado }).eq('id', empleado.id);
       if (error) throw error;
-      
       setOpenMenuId(null);
       fetchStaff();
     } catch (error) {
-      alert("Error al cambiar estado: " + error.message);
+      setErrorMsg(error.message);
     }
   };
 
@@ -72,6 +75,10 @@ export default function StaffSettings() {
             <span className="text-xl">+</span> Nuevo Empleado
           </button>
         </div>
+
+        {errorMsg && (
+          <p className="text-sm font-bold text-red-500 bg-red-50 rounded-2xl px-5 py-3 mb-6">{errorMsg}</p>
+        )}
 
         {loading ? (
           <div className="text-center py-20 animate-pulse font-black text-slate-300 uppercase tracking-widest">
@@ -120,12 +127,29 @@ export default function StaffSettings() {
                           >
                             {empleado.estado === 'activo' ? 'Dar de baja' : 'Reactivar'}
                           </button>
-                          <button 
-                            onClick={() => handleDelete(empleado.id)}
-                            className="w-full text-left px-5 py-4 text-[10px] font-black uppercase tracking-widest text-red-600 hover:bg-red-50 transition-colors"
-                          >
-                            Eliminar
-                          </button>
+                          {deleteConfirmId === empleado.id ? (
+                            <div className="flex items-center gap-2 px-3 py-3">
+                              <button
+                                onClick={() => handleDelete(empleado.id)}
+                                className="flex-1 px-3 py-2 bg-red-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-700 transition-all"
+                              >
+                                Sí, borrar
+                              </button>
+                              <button
+                                onClick={() => setDeleteConfirmId(null)}
+                                className="flex-1 px-3 py-2 bg-slate-100 text-slate-500 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 transition-all"
+                              >
+                                Cancelar
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => handleDelete(empleado.id)}
+                              className="w-full text-left px-5 py-4 text-[10px] font-black uppercase tracking-widest text-red-600 hover:bg-red-50 transition-colors"
+                            >
+                              Eliminar
+                            </button>
+                          )}
                         </div>
                       </>
                     )}

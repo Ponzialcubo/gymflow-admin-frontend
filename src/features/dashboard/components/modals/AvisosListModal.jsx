@@ -5,6 +5,8 @@ export default function AvisosListModal({ isOpen, onClose }) {
   // ... (toda tu lógica de fetchAvisos, handleDelete, getBadgeStyle se queda igual) ...
   const [avisos, setAvisos] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState('');
+  const [deleteConfirmId, setDeleteConfirmId] = useState(null);
 
   const fetchAvisos = async () => {
     try {
@@ -22,13 +24,17 @@ export default function AvisosListModal({ isOpen, onClose }) {
   useEffect(() => { if (isOpen) fetchAvisos(); }, [isOpen]);
 
   const handleDelete = async (id) => {
-    if (!window.confirm("¿Estás seguro de eliminar este aviso?")) return;
+    if (deleteConfirmId !== id) {
+      setDeleteConfirmId(id);
+      return;
+    }
+    setDeleteConfirmId(null);
     try {
       const { error } = await supabase.from('avisos').delete().eq('id', id);
       if (error) throw error;
       fetchAvisos();
     } catch (err) {
-      alert("Error al borrar.");
+      setErrorMsg("Error al borrar el aviso.");
     }
   };
 
@@ -53,6 +59,10 @@ export default function AvisosListModal({ isOpen, onClose }) {
         {/* NUEVO TAMAÑO: text-6xl (antes 5xl) */}
         <h2 className="text-6xl font-black text-slate-800 tracking-tighter mb-10">Tablón de Avisos</h2>
 
+        {errorMsg && (
+          <p className="text-sm font-bold text-red-500 bg-red-50 rounded-2xl px-5 py-3 mb-4">{errorMsg}</p>
+        )}
+
         <div className="flex-1 space-y-6 max-h-[60vh] overflow-y-auto pr-4 custom-scrollbar">
           {loading ? (
               <div className="text-center py-10">
@@ -71,9 +81,26 @@ export default function AvisosListModal({ isOpen, onClose }) {
                   <span className={`text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-full border ${getBadgeStyle(aviso.tipo)}`}>
                     {aviso.tipo}
                   </span>
-                  <button onClick={() => handleDelete(aviso.id)} className="text-2xl text-slate-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100">
-                    🗑️
-                  </button>
+                  {deleteConfirmId === aviso.id ? (
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleDelete(aviso.id)}
+                        className="px-3 py-2 bg-red-600 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-red-700 transition-all"
+                      >
+                        Sí, eliminar
+                      </button>
+                      <button
+                        onClick={() => setDeleteConfirmId(null)}
+                        className="px-3 py-2 bg-slate-100 text-slate-500 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-slate-200 transition-all"
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  ) : (
+                    <button onClick={() => handleDelete(aviso.id)} className="text-2xl text-slate-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100">
+                      🗑️
+                    </button>
+                  )}
                 </div>
                 
                 {/* NUEVO TAMAÑO: text-3xl (antes 2xl) */}

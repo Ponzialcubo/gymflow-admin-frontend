@@ -8,12 +8,14 @@ export const useExercises = () => {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   
-  const [newExercise, setNewExercise] = useState({ 
-    nombre: '', 
-    grupo_muscular: 'Pecho', 
-    descripcion: '', 
-    imagen_url: '' 
+  const [newExercise, setNewExercise] = useState({
+    nombre: '',
+    grupo_muscular: 'Pecho',
+    descripcion: '',
+    imagen_url: ''
   });
+  const [errorMsg, setErrorMsg] = useState('');
+  const [deleteConfirmId, setDeleteConfirmId] = useState(null);
 
   // Usamos useCallback para que la función sea estable y no de problemas en el useEffect
   const fetchExercises = useCallback(async () => {
@@ -51,28 +53,28 @@ export const useExercises = () => {
       setIsModalOpen(false);
       setNewExercise({ nombre: '', grupo_muscular: 'Pecho', descripcion: '', imagen_url: '' });
       fetchExercises();
-    } catch (err) { 
+    } catch (err) {
       console.error(err);
-      alert("Error al guardar el ejercicio: " + err.message); 
+      setErrorMsg(err.message);
     }
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("¿Estás seguro de eliminar este ejercicio?")) return;
-    
+    if (deleteConfirmId !== id) {
+      setDeleteConfirmId(id);
+      return;
+    }
+    setDeleteConfirmId(null);
     try {
-      // DELETE FROM ejercicios WHERE id = id
       const { error } = await supabase
         .from('ejercicios')
         .delete()
         .eq('id', id);
 
       if (error) throw error;
-      
       fetchExercises();
-    } catch (err) { 
-      // Si el ejercicio está en una rutina, Postgres lanzará un error de clave foránea
-      alert("No se puede eliminar: El ejercicio está siendo usado en rutinas activas."); 
+    } catch (err) {
+      setErrorMsg("No se puede eliminar: ejercicio en uso");
       console.error(err);
     }
   };
@@ -95,6 +97,8 @@ export const useExercises = () => {
     isModalOpen, setIsModalOpen,
     newExercise, setNewExercise,
     handleAddExercise,
-    handleDelete
+    handleDelete,
+    errorMsg, setErrorMsg,
+    deleteConfirmId, setDeleteConfirmId
   };
 };

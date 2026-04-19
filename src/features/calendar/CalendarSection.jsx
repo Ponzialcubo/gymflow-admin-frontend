@@ -6,6 +6,7 @@ export default function CalendarSection() {
   const [clases, setClases] = useState([]);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState(false);
+  const [deleteConfirmId, setDeleteConfirmId] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [classToEdit, setClassToEdit] = useState(null);
 
@@ -107,13 +108,17 @@ export default function CalendarSection() {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("¿Seguro que quieres eliminar esta sesión de la parrilla?")) return;
+    if (deleteConfirmId !== id) {
+      setDeleteConfirmId(id);
+      return;
+    }
+    setDeleteConfirmId(null);
     try {
       const { error } = await supabase.from('clases_colectivas').delete().eq('id', id);
       if (error) throw error;
       fetchClases();
     } catch (error) {
-      alert("Error al eliminar: " + error.message);
+      console.error("Error al eliminar:", error.message);
     }
   };
 
@@ -207,20 +212,37 @@ export default function CalendarSection() {
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <button 
+                  <button
                     onClick={() => handleOpenEdit(clase)}
                     className="w-14 h-14 rounded-2xl bg-slate-50 text-slate-400 flex items-center justify-center hover:bg-blue-50 hover:text-blue-600 hover:border hover:border-blue-100 transition-all shadow-sm text-xl"
                     title="Editar sesión"
                   >
                     ✎
                   </button>
-                  <button 
-                    onClick={() => handleDelete(clase.id)}
-                    className="w-14 h-14 rounded-2xl bg-slate-50 text-slate-400 flex items-center justify-center hover:bg-red-50 hover:text-red-600 hover:border hover:border-red-100 transition-all shadow-sm text-xl"
-                    title="Eliminar sesión"
-                  >
-                    ✕
-                  </button>
+                  {deleteConfirmId === clase.id ? (
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleDelete(clase.id)}
+                        className="px-3 py-2 bg-red-600 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-red-700 transition-all"
+                      >
+                        Sí, eliminar
+                      </button>
+                      <button
+                        onClick={() => setDeleteConfirmId(null)}
+                        className="px-3 py-2 bg-slate-100 text-slate-500 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-slate-200 transition-all"
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => handleDelete(clase.id)}
+                      className="w-14 h-14 rounded-2xl bg-slate-50 text-slate-400 flex items-center justify-center hover:bg-red-50 hover:text-red-600 hover:border hover:border-red-100 transition-all shadow-sm text-xl"
+                      title="Eliminar sesión"
+                    >
+                      ✕
+                    </button>
+                  )}
                 </div>
               </div>
             ))}

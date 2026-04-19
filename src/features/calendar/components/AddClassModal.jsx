@@ -11,6 +11,7 @@ export default function AddClassModal({ isOpen, onClose, onClassAdded, classToEd
     hora: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
 
   // Cargar monitores y rellenar datos si estamos editando
   useEffect(() => {
@@ -73,7 +74,7 @@ export default function AddClassModal({ isOpen, onClose, onClassAdded, classToEd
       onClassAdded();
       onClose();
     } catch (error) {
-      alert(`Error al ${classToEdit ? 'actualizar' : 'crear'}: ` + error.message);
+      setErrorMsg(`Error al ${classToEdit ? 'actualizar' : 'crear'}: ` + error.message);
     } finally {
       setIsSubmitting(false);
     }
@@ -131,8 +132,12 @@ export default function AddClassModal({ isOpen, onClose, onClassAdded, classToEd
             </div>
           </div>
           
-          <button 
-            type="submit" 
+          {errorMsg && (
+            <p className="text-sm font-bold text-red-500 bg-red-50 rounded-2xl px-5 py-3 mt-3">{errorMsg}</p>
+          )}
+
+          <button
+            type="submit"
             disabled={isSubmitting}
             className="w-full py-5 bg-slate-900 text-white rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-blue-600 transition-all shadow-xl disabled:opacity-50 mt-4"
           >

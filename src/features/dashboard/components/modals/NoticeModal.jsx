@@ -9,6 +9,7 @@ export default function NoticeModal({ isOpen, onClose, onNoticeAdded }) {
   });
   
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
 
   if (!isOpen) return null;
 
@@ -34,7 +35,7 @@ export default function NoticeModal({ isOpen, onClose, onNoticeAdded }) {
       onClose();
     } catch (error) {
       console.error("Error al crear aviso en Supabase:", error);
-      alert("Hubo un error al publicar el aviso. Revisa la consola.");
+      setErrorMsg("Error al publicar el aviso.");
     } finally {
       setIsSubmitting(false);
     }
@@ -100,6 +101,10 @@ export default function NoticeModal({ isOpen, onClose, onNoticeAdded }) {
             </div>
           </div>
           
+          {errorMsg && (
+            <p className="text-sm font-bold text-red-500 bg-red-50 rounded-2xl px-5 py-3 mt-3">{errorMsg}</p>
+          )}
+
           <div className="flex gap-6 pt-6">
             <button 
               type="button"

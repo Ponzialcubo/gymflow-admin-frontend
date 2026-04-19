@@ -3,6 +3,7 @@ import { supabase } from '../../../config/supabase';
 
 export default function AddExpenseModal({ isOpen, onClose, onSuccess }) {
   const [saving, setSaving] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
   const [form, setForm] = useState({
     fecha: new Date().toISOString().split('T')[0],
     concepto: '',
@@ -29,11 +30,10 @@ export default function AddExpenseModal({ isOpen, onClose, onSuccess }) {
     
     if (error) throw error;
 
-    alert("✅ Gasto guardado en la base de datos");
-    onSuccess(); // Esto ejecuta 'refresh' en el componente padre
+    onSuccess();
     onClose();
   } catch (error) {
-    alert("Error al guardar: " + error.message);
+    setErrorMsg(error.message);
   } finally {
     setSaving(false);
   }
@@ -82,6 +82,10 @@ export default function AddExpenseModal({ isOpen, onClose, onSuccess }) {
               </select>
             </div>
           </div>
+          {errorMsg && (
+            <p className="text-sm font-bold text-red-500 bg-red-50 rounded-2xl px-5 py-3 mt-3">{errorMsg}</p>
+          )}
+
           <div className="pt-6 flex justify-end">
             <button type="submit" disabled={saving} className="px-8 py-4 bg-blue-600 text-white rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-blue-700 transition-all shadow-xl active:scale-95">
               {saving ? 'Guardando...' : 'Registrar Gasto'}
