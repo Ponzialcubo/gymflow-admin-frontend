@@ -11,7 +11,8 @@ export default function ExercisesSection() {
     selectedMuscle, setSelectedMuscle,
     isModalOpen, setIsModalOpen,
     newExercise, setNewExercise,
-    handleAddExercise, handleDelete
+    handleAddExercise, handleDelete,
+    errorMsg, deleteConfirmId, setDeleteConfirmId
   } = useExercises();
 
   // Estado para controlar el Modal de Detalles
@@ -43,14 +44,20 @@ export default function ExercisesSection() {
         onOpenModal={() => setIsModalOpen(true)}
       />
 
+      {errorMsg && (
+        <p className="text-sm font-bold text-red-500 bg-red-50 rounded-2xl px-5 py-3 mt-3">{errorMsg}</p>
+      )}
+
       {/* Grid de ejercicios con espaciado pro */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-8">
         {exercises.map(e => (
-          <ExerciseCard 
-            key={e.id} 
-            exercise={e} 
+          <ExerciseCard
+            key={e.id}
+            exercise={e}
             onDelete={handleDelete}
             onView={handleViewDetails}
+            deleteConfirmId={deleteConfirmId}
+            onCancelDelete={() => setDeleteConfirmId(null)}
           />
         ))}
       </div>

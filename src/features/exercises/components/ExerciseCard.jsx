@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function ExerciseCard({ exercise, onDelete, onView }) {
+export default function ExerciseCard({ exercise, onDelete, onView, deleteConfirmId, onCancelDelete }) {
   const getIcon = (grupo) => {
     const icons = { pecho: '💪', espalda: '🪵', pierna: '🦵', hombro: '🛡️', brazos: '🦾', core: '🧘' };
     return icons[grupo?.toLowerCase()] || '🏋️‍♂️';
@@ -53,9 +53,27 @@ export default function ExerciseCard({ exercise, onDelete, onView }) {
         </p>
         <div className="flex justify-between items-center pt-6 border-t border-slate-50">
           <span className="text-[10px] font-black text-slate-300 uppercase italic tracking-widest">ID #{exercise.id}</span>
-          <button onClick={() => onDelete(exercise.id)} className="w-12 h-12 flex items-center justify-center rounded-2xl bg-red-50 text-red-400 hover:bg-red-500 hover:text-white transition-all text-xl">
-            🗑️
-          </button>
+          {deleteConfirmId === exercise.id ? (
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">¿Eliminar?</span>
+              <button
+                onClick={() => onDelete(exercise.id)}
+                className="px-3 py-2 bg-red-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-700 transition-all"
+              >
+                Sí
+              </button>
+              <button
+                onClick={onCancelDelete}
+                className="px-3 py-2 bg-slate-100 text-slate-500 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 transition-all"
+              >
+                No
+              </button>
+            </div>
+          ) : (
+            <button onClick={() => onDelete(exercise.id)} className="w-12 h-12 flex items-center justify-center rounded-2xl bg-red-50 text-red-400 hover:bg-red-500 hover:text-white transition-all text-xl">
+              🗑️
+            </button>
+          )}
         </div>
       </div>
     </div>
