@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { supabase } from '../../../config/supabase';
+import { supabase } from '../../../../config/supabase';
 
 export default function SupportModal({ isOpen, onClose }) {
   const [formData, setFormData] = useState({
