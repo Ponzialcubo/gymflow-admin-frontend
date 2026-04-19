@@ -120,7 +120,7 @@ export default function AddSubscriptionModal({ isOpen, onClose, users, newSub, s
                         setSearchTerm(u.nombre.toUpperCase());
                         setIsDropdownOpen(false);
                       }}
-                     Vite>
+                    >
                       <span className="font-black text-slate-800 text-sm">{u.nombre.toUpperCase()}</span>
                       <span className="text-[10px] text-slate-400 font-bold tracking-tight">{u.email}</span>
                     </button>
